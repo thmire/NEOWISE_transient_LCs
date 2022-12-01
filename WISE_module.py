@@ -405,7 +405,7 @@ class WISE_Data:
         fig.set_size_inches(7,7)
         plt.show()
         
-    def filter_data(self,filters='all',soft='no',psf_mag=True):
+    def filter_data(self,filters='all',soft='no'):
         """
         Removes data based on a number of criteria. Currently only has strictest setting or the 
         "soft" setting which allows objects with bad cc_flags
@@ -413,7 +413,22 @@ class WISE_Data:
         """
         
         # If we want to use the aperture_mags
-        if psf_mag != True :
+
+        if soft == 'yes':
+            print('Allowing bad cc_flags')
+            neowise_mask = [all(constraint) for constraint in zip(
+                self.datatable['sep'] < self.allowed_sep,\
+                self.datatable['qual_frame'] > 0,\
+                self.datatable['qi_fact'] > 0,\
+                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
+                [abs(i) > 5 for i in self.datatable['saa_sep']],\
+                self.datatable['moon_masked'] == 0,\
+                ~np.isnan(self.datatable['w1mag']),\
+                ~np.isnan(self.datatable['w2mag']),\
+                ~np.isnan(self.datatable['w1mpro']),\
+                ~np.isnan(self.datatable['w2mpro']))]
+
+        else :
             neowise_mask = [all(constraint) for constraint in zip(
                 self.datatable['sep'] < self.allowed_sep,\
                 self.datatable['qual_frame'] > 0,\
@@ -424,69 +439,39 @@ class WISE_Data:
                 [(i == 0.0 or i == '0000') for i in self.datatable['cc_flags']],\
                 ~np.isnan(self.datatable['w1mag']),\
                 ~np.isnan(self.datatable['w2mag']),\
+                ~np.isnan(self.datatable['w1mpro']),\
+                ~np.isnan(self.datatable['w2mpro'])
 #                 self.datatable['w1flg'] == 0.0, 
 #                 self.datatable['w2flg'] == 0.0
             )]      
             
-            # Currently not filtering the bad measurements, ADD?
-            neowise_df = pd.DataFrame({})
-            neowise_df['mjd'] = self.datatable['mjd'][neowise_mask]
-            neowise_df['w1mag'] = self.datatable['w1mag'][neowise_mask]
-            neowise_df['w1sig'] = self.datatable['w1sigm'][neowise_mask]
-            neowise_df['w2mag'] = self.datatable['w2mag'][neowise_mask]
-            neowise_df['w2sig'] = self.datatable['w2sigm'][neowise_mask]
-            
-            neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
-            neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
-            neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
-            neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
-
-            self.data = neowise_df
-            self.filtered = 'yes'
-            print("Length:", len(self.data['w1mag']))
-            if len(self.data['w1mag']) == 0:
-                self.baddata ='yes'
-            else :
-                self.baddata ='no'
-            w1mags = neowise_df["w1mag"].to_numpy()
-            w2mags = neowise_df["w2mag"].to_numpy()
-            nonlin_unc_w1 = np.zeros(len(w1mags))
-            nonlin_unc_w2 = np.zeros(len(w2mags))
-
-            neowise_df["w1_nonlin_unc"] = nonlin_unc_w1; neowise_df["w2_nonlin_unc"] = nonlin_unc_w2
-
-            return
-        
-        # later can code so that you can filter by one element at a time, based on the plots
-        if soft == 'yes':
-            print('Allowing bad cc_flags')
-            neowise_mask = [all(constraint) for constraint in zip(
-                self.datatable['sep'] < self.allowed_sep,\
-                self.datatable['qual_frame'] > 0,\
-                self.datatable['qi_fact'] > 0,\
-                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
-                [abs(i) > 5 for i in self.datatable['saa_sep']],\
-                self.datatable['moon_masked'] == 0,\
-                ~np.isnan(self.datatable['w1mpro']),\
-                ~np.isnan(self.datatable['w2mpro']))]
-        else :
-            neowise_mask = [all(constraint) for constraint in zip(
-                self.datatable['sep'] < self.allowed_sep,\
-                self.datatable['qual_frame'] > 0,\
-                self.datatable['qi_fact'] > 0,\
-                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
-                [abs(i) > 5 for i in self.datatable['saa_sep']],\
-                self.datatable['moon_masked'] == 0,\
-                [(i == 0.0 or i == '0000') for i in self.datatable['cc_flags']],\
-                ~np.isnan(self.datatable['w1mpro']),\
-                ~np.isnan(self.datatable['w2mpro']))]
-        
         neowise_df = pd.DataFrame({})
         neowise_df['mjd'] = self.datatable['mjd'][neowise_mask]
+           
         neowise_df['w1mag'] = self.datatable['w1mpro'][neowise_mask]
         neowise_df['w1sig'] = self.datatable['w1sigmpro'][neowise_mask]
         neowise_df['w2mag'] = self.datatable['w2mpro'][neowise_mask]
         neowise_df['w2sig'] = self.datatable['w2sigmpro'][neowise_mask]
+        neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
+        neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
+        neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+        neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
+            
+        neowise_df['w1apmag'] = self.datatable['w1mag'][neowise_mask]
+        neowise_df['w1apsig'] = self.datatable['w1sigm'][neowise_mask]
+        neowise_df['w2apmag'] = self.datatable['w2mag'][neowise_mask]
+        neowise_df['w2apsig'] = self.datatable['w2sigm'][neowise_mask]    
+        neowise_df['w1apflux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
+        neowise_df['w1apfluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
+        neowise_df['w2apflux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+        neowise_df['w2apfluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
+
+
+        print("Length:", len(self.data['w1mag']))
+        if len(self.data['w1mag']) == 0:
+            self.baddata ='yes'
+        else :
+            self.baddata ='no'
         
         # Here we also want to extract the data rejected for being too far from the expected coords
         neowise_extras = pd.DataFrame({})
@@ -511,8 +496,7 @@ class WISE_Data:
                     neowise_df['w3mag'] = self.datatable['w3mpro'][neowise_mask]
                     neowise_df['w3sig'] = self.datatable['w3sigmpro'][neowise_mask]
                     neowise_df['w3flux'] = mag_to_fluxdens(neowise_df['w3mag'], self.f0_W3)
-                    neowise_df['w3fluxsig'] =   neowise_df['w3flux'] * mag_unc_to_flux_unc(neowise_df['w3sig'])            
-                    
+                    neowise_df['w3fluxsig'] =   neowise_df['w3flux'] * mag_unc_to_flux_unc(neowise_df['w3sig'])                                
                     neowise_df['w4mag'] = self.datatable['w4mpro'][neowise_mask]
                     neowise_df['w4sig'] = self.datatable['w4sigmpro'][neowise_mask]
                     neowise_df['w4flux'] = mag_to_fluxdens(neowise_df['w4mag'], self.f0_W4)
@@ -521,7 +505,7 @@ class WISE_Data:
                 pass
         
         #Apply non-linearity correction
-        
+        # THIS NEEDS an external file! Careful
         w1_lincorr = np.loadtxt('/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/W1_saturation_corr.txt',
                                skiprows=5,unpack='yes')
         w2_lincorr = np.loadtxt('/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/W2_saturation_corr.txt',
@@ -529,8 +513,9 @@ class WISE_Data:
         
         w1mags = neowise_df["w1mag"].to_numpy()
         w2mags = neowise_df["w2mag"].to_numpy()
-        
         nonlin_unc_w1 = np.zeros(len(w1mags))
+        nonlin_unc_w2 = np.zeros(len(w2mags))
+    
         sat_warning=None
         for i in range(0,len(w1mags)) :
             mag = w1mags[i]
@@ -545,10 +530,8 @@ class WISE_Data:
                 nonlin_unc_w1[np.where(w1mags == mag)] = corr_err
                 w1mags[np.where(w1mags == mag)] = mag_corr[0]
                 
-                
-        nonlin_unc_w2 = np.zeros(len(w2mags))
         sat_warning=None
-        for i in range(0,len(neowise_df['w1mag'])) :
+        for i in range(0,len(w2mags)) :
             mag = w2mags[i]
             if mag < 7 :
                 if sat_warning == None :
@@ -560,7 +543,6 @@ class WISE_Data:
                 corr_err = np.max(np.array([w2_lincorr[2][index],w2_lincorr[3][index]]))
                 nonlin_unc_w2[np.where(w2mags == mag)] = corr_err
                 w2mags[np.where(w2mags == mag)] = mag_corr[0]
-                
         
         neowise_df["w1_nonlin_unc"] = nonlin_unc_w1; neowise_df["w2_nonlin_unc"] = nonlin_unc_w2
         
