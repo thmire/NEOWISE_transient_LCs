@@ -437,8 +437,8 @@ class WISE_Data:
                 [abs(i) > 5 for i in self.datatable['saa_sep']],\
                 self.datatable['moon_masked'] == 0,\
                 [(i == 0.0 or i == '0000') for i in self.datatable['cc_flags']],\
-                ~np.isnan(self.datatable['w1mag']),\
-                ~np.isnan(self.datatable['w2mag']),\
+#                ~np.isnan(self.datatable['w1mag']),\
+#                ~np.isnan(self.datatable['w2mag']),\
                 ~np.isnan(self.datatable['w1mpro']),\
                 ~np.isnan(self.datatable['w2mpro'])
 #                 self.datatable['w1flg'] == 0.0, 
@@ -465,13 +465,6 @@ class WISE_Data:
         neowise_df['w1apfluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
         neowise_df['w2apflux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
         neowise_df['w2apfluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
-
-
-        print("Length:", len(self.data['w1mag']))
-        if len(self.data['w1mag']) == 0:
-            self.baddata ='yes'
-        else :
-            self.baddata ='no'
         
         # Here we also want to extract the data rejected for being too far from the expected coords
         neowise_extras = pd.DataFrame({})
@@ -563,7 +556,7 @@ class WISE_Data:
             self.baddata ='yes'
         else :
             self.baddata ='no'
-        
+            
     def bin_data(self,plot='yes',mag_measure = 'mean',err_measure='SEM'):
         """
         Bins data from sets of observations. Will plot as default
