@@ -424,8 +424,8 @@ class WISE_Data:
                 [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
                 [abs(i) > 5 for i in self.datatable['saa_sep']],\
                 self.datatable['moon_masked'] == 0,\
-                ~np.isnan(self.datatable['w1mag']),\
-                ~np.isnan(self.datatable['w2mag']),\
+#                ~np.isnan(self.datatable['w1mag']),\
+#                ~np.isnan(self.datatable['w2mag']),\
                 ~np.isnan(self.datatable['w1mpro']),\
                 ~np.isnan(self.datatable['w2mpro']))]
 
@@ -586,39 +586,26 @@ class WISE_Data:
         
         """
         
-        # This is just for if you forget to filter, could remove
+        # This is just for if you forget to filter
         if self.filtered == 'no':
-            print('Perhaps you should filter first, making a workaround...')
-            neowise_mask = [all(constraint) for constraint in zip(
-                self.datatable['sep'] < self.allowed_sep,\
-                self.datatable['qual_frame'] > 0,\
-                self.datatable['qi_fact'] > 0,\
-                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
-                [abs(i) > 5 for i in self.datatable['saa_sep']],\
-                self.datatable['moon_masked'] == 0,\
-                ~np.isnan(self.datatable['w1mpro']),\
-                ~np.isnan(self.datatable['w2mpro']))]
-            neowise_df = pd.DataFrame({})
-            neowise_df['mjd'] = self.datatable['mjd'][neowise_mask]
-            neowise_df['w1mag'] = self.datatable['w1mpro'][neowise_mask]
-            neowise_df['w1sig'] = self.datatable['w1sigmpro'][neowise_mask]
-            neowise_df['w2mag'] = self.datatable['w2mpro'][neowise_mask]
-            neowise_df['w2sig'] = self.datatable['w2sigmpro'][neowise_mask]
-            self.data = neowise_df
-            if len(self.data['w1mag']) == 0:
-                self.baddata ='yes'
+            print('You should run the filter_data method first')
+            return
         if self.baddata == 'yes':
             print(self.source+': No good data!')
             return
+
+        # Use the binning that is built into pandas dfs
+
         
-                
         start_epoch = np.min(self.data['mjd'])
         end_epoch = np.max(self.data['mjd'])
         yr = u.year.to(u.d)    
         cycles = (end_epoch - start_epoch)/yr * 2
         #print(cycles) # should be close to .5 or .0, as WISE is on a 6 month cycle. Inspect below
         cycles = round(cycles,0)
-        bins = [start_epoch - yr/4 + a*(yr/2) for a in np.arange(cycles + 2)]
+        bins = np.array([start_epoch - yr/4 + a*(yr/2) for a in np.arange(cycles + 2)])
+
+        # Plotting option to check that the binning works
         if plot == 'yes':
             fig, (ax1, ax2) = plt.subplots(1,2)
             ax1.errorbar(self.data['mjd'], self.data['w1mag'], yerr=self.data['w1sig'],\
@@ -633,16 +620,94 @@ class WISE_Data:
                 ax1.axvline(epoch)
                 ax2.axvline(epoch)
             fig.set_size_inches(12,6)
-            
             plt.show()
             
+        # Some options for measuring the binned mag
+        if mag_measure == 'sigmean' :
+            stat = np.mean(astropy.stats.sigma_clip)
+            self.mag_measure = "sigma clipped mean"
+        elif mag_measure == 'mean':
+            stat = np.nanmean
+            self.mag_measure = "mean"
+        else :    
+            stat = np.median
+            self.mag_measure = "median"
+        # Some options for measuring the binned errors            
+        if err_measure == 'SEM':
+            err_stat = SEM      
+        elif err_measure == 'sigma':
+            err_stat = np.std
             
         neowise_bin_df = pd.DataFrame({})
+        groups = self.data.groupby(pd.cut(self.data.mjd, bins))
+        neowise_bin_df['mjd'] = np.array(groups.mean()["mjd"])
+        if mag_measure == "mean" :
+            w1mag_values = np.array(groups.mean()["w1mag"])
+            w1flux_values = np.array(groups.mean()["w1flux"])
+            w1apmag_values = np.array(groups.mean()["w1apmag"])
+            w1apflux_values = np.array(groups.mean()["w1apflux"])
+            w1ap_mag_values = [np.array(groups.mean()['w1apmag_'+str(i)]) for i in range(1,9)]
+            w1ap_flux_values = [np.array(groups.mean()['w1apflux_'+str(i)]) for i in range(1,9)]
+                               
+            w2mag_values = np.array(groups.mean()["w2mag"])
+            w2flux_values = np.array(groups.mean()["w2flux"])
+            w2apmag_values = np.array(groups.mean()["w2apmag"])
+            w2apflux_values = np.array(groups.mean()["w2apflux"])
+            w2ap_mag_values = [np.array(groups.mean()['w2apmag_'+str(i)]) for i in range(1,9)]
+            w2ap_flux_values = [np.array(groups.mean()['w1apflux_'+str(i)]) for i in range(1,9)]
 
+        # Want to take the mean weighted by the uncertainties
+
+        if err_measure == "SEM" :
+            w1mag_err = np.array(groups.sem()["w1mag"])
+            w1flux_err = np.array(groups.sem()["w1flux"])
+            w1apmag_err = np.array(groups.sem()["w1apmag"])
+            w1apmag_err = np.array(groups.sem()["w1apflux"])
+            w1ap_mag_values = [np.array(groups.sem()['w1apmag_'+str(i)]) for i in range(1,9)]
+            w1ap_flux_values = [np.array(groups.sem()['w1apflux_'+str(i)]) for i in range(1,9)]
+                                
+            w2mag_err = np.array(groups.sem()["w2mag"])
+            w2flux_err = np.array(groups.sem()["w2flux"])
+            w2apmag_err = np.array(groups.sem()["w2apmag"])
+            w2apmag_err = np.array(groups.sem()["w2apflux"])
+            w2ap_mag_values = [np.array(groups.sem()['w2apmag_'+str(i)]) for i in range(1,9)]
+            w2ap_flux_values = [np.array(groups.sem()['w2apflux_'+str(i)]) for i in range(1,9)]
+
+        
+        w2mag_err_2 = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2mag'].values,\
+                                                   statistic=err_stat, bins=bins, range=None)[0]
+        print(w2mag_err,w2mag_err_2)
+        #w2mag_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2mag'].values,\
+        #                                           statistic=err_stat, bins=bins, range=None)[0]
+        #w1flux_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1flux'].values,\
+        #                                           statistic=err_stat, bins=bins, range=None)[0]
+        #w2flux_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2flux'].values,\
+        #                                               statistic=err_stat, bins=bins, range=None)[0]
+        
         # Bin mean mjd according to bin edges
-        neowise_bin_df['mjd'] = scipy.stats.binned_statistic(self.data['mjd'].values,
-                                                             self.data['mjd'].values,\
-                                                       statistic=np.mean, bins=bins, range=None)[0]
+        # THIS IS THE OLD WAY, REMOVE IF THE NEW WAY WORKS
+        # neowise_bin_df['mjd'] = scipy.stats.binned_statistic(self.data['mjd'].values,
+        #                                                     self.data['mjd'].values,\
+        #                                               statistic=np.mean, bins=bins, range=None)[0]
+
+
+
+        # If you want to use the weighted mean of the unc's for the points you are binning as the
+        # overall error, use w1mag_err. The difference is small IF you are using the flux uncertertainty
+        # term in the ZP, as that dominates.
+        # The weighted average of the errors is less sensitive to outliers.
+        
+        # Bin mean magnitude, with error standard error of mean
+                                
+        # THIS IS THE OLD WAY, REMOVE IF THE NEW WAY WORKS
+        #w1mag_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1mag'].values,\
+        #                                               statistic=stat, bins=bins, range=None)[0]
+        #w2mag_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2mag'].values,\
+        #                                               statistic=stat, bins=bins, range=None)[0] 
+        #w1flux_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1flux'].values,\
+        #                                               statistic=stat, bins=bins, range=None)[0]  
+        #w2flux_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2flux'].values,\
+        #                                               statistic=stat, bins=bins, range=None)[0]
 
         # we will assume the m_i are independent and drawn fro a gaussian distribution with the 
         # uncertainties correctly measured. Then we can use the weighted mean and weighted sigma, 
@@ -692,47 +757,9 @@ class WISE_Data:
 #         neowise_bin_df['w2flux'] = unp.uarray(w2flux_values,
 #                                     np.sqrt(w2flux_SEM**2+(w2flux_values*0.027)**2+ w2flux_mean_non_lin_unc**2 ) 
         
+
         
-        if mag_measure == 'sigmean' :
-            stat = np.mean(astropy.stats.sigma_clip)
-            self.mag_measure = "sigma clipped mean"
-        elif mag_measure == 'mean':
-            stat = np.nanmean
-            self.mag_measure = "mean"
-        else :    
-            stat = np.median
-            self.mag_measure = "median"
-            
-        if err_measure == 'SEM':
-            err_stat = SEM      
-        elif err_measure == 'sigma':
-            err_stat = np.std
-        # If you want to use the weighted mean of the unc's for the points you are binning as the
-        # overall error, use w1mag_err. The difference is small IF you are using the flux uncertertainty
-        # term in the ZP, as that dominates.
-        # The weighted average of the errors is less sensitive to outliers.
-        
-        # Bin mean magnitude, with error standard error of mean 
-        
-        w1mag_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1mag'].values,\
-                                                       statistic=stat, bins=bins, range=None)[0]
-        w2mag_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2mag'].values,\
-                                                       statistic=stat, bins=bins, range=None)[0] 
-        w1flux_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1flux'].values,\
-                                                       statistic=stat, bins=bins, range=None)[0]  
-        w2flux_values = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2flux'].values,\
-                                                       statistic=stat, bins=bins, range=None)[0]
-        
-        # Want to take the mean weighted by the uncertainties
-        
-        w1mag_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1mag'].values,\
-                                                   statistic=err_stat, bins=bins, range=None)[0]
-        w2mag_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2mag'].values,\
-                                                   statistic=err_stat, bins=bins, range=None)[0]
-        w1flux_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w1flux'].values,\
-                                                   statistic=err_stat, bins=bins, range=None)[0]
-        w2flux_err = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2flux'].values,\
-                                                       statistic=err_stat, bins=bins, range=None)[0]
+
         
         w1mag_mean_nonlin_unc = scipy.stats.binned_statistic(self.data['mjd'].values,
                                                                        self.data['w1_nonlin_unc'].values,\
