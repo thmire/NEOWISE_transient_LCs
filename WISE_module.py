@@ -410,6 +410,7 @@ class WISE_Data:
         Removes data based on a number of criteria. Currently only has strictest setting or the 
         "soft" setting which allows objects with bad cc_flags
         Also checks for saturation and applies non-linearity correction
+        Also, sets up all the aperture mags to be binned
         """
         
         # If we want to use the aperture_mags
