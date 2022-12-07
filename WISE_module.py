@@ -659,7 +659,7 @@ class WISE_Data:
             w2ap_mag_values = [np.array(groups.mean()['w2apmag_'+str(i)]) for i in range(1,9)]
             w2ap_flux_values = [np.array(groups.mean()['w1apflux_'+str(i)]) for i in range(1,9)]
             
-        elif : mag_measure == "median" :
+        elif mag_measure == "median" :
             w1mag_values = np.array(groups.median()["w1mag"])
             w1flux_values = np.array(groups.median()["w1flux"])
             w1apmag_values = np.array(groups.median()["w1apmag"])
