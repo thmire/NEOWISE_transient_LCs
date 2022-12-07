@@ -759,23 +759,37 @@ class WISE_Data:
 
         
         if self.ALLWISE_datatable.empty != True :
+            print("Trying W3")
             try :
-                if self.ALLWISE_datatable.empty == False :
                 
-                    w3mag_values,w3mag_err = bins_W3_W4(self.data,'w3mag',bins)
-                    w3flux_values,w3flux_err = bins_W3_W4(self.data,'w3flux',bins)
-                    w4mag_values,w4mag_err = bins_W3_W4(self.data,'w4mag',bins)
-                    w4flux_values,w4flux_err = bins_W3_W4(self.data,'w4flux',bins)
-        
-        
-                    neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
+                w3mag_values = np.array(groups.median()["w3mag"])
+                w3mag_err = np.array(groups.sem()["w3mag"])
+                w3flux_values = np.array(groups.median()["w3flux"])
+                w3flux_err = np.array(groups.sem()["w3flux"])
+                
+                w4mag_values = np.array(groups.median()["w4mag"])
+                w4mag_err = np.array(groups.sem()["w4mag"])
+                w4flux_values = np.array(groups.median()["w4flux"])
+                w4flux_err = np.array(groups.sem()["w4flux"])
+ 
+                neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
                                         np.sqrt(w3mag_err**2 + (flux_unc_to_mag_unc(0.045))**2))
-                    neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
-                                            np.sqrt(w4mag_err**2+ (flux_unc_to_mag_unc(0.057))**2))
-                    neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
-                        np.sqrt(w3flux_err**2+(w3flux_values*0.045)**2))
-                    neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
-                             np.sqrt(w4flux_err**2+(w4flux_values*0.057)**2))
+                neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
+                                        np.sqrt(w3flux_err**2 + (w3flux_values*0.045)**2))
+
+                neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
+                                        np.sqrt(w4mag_err**2 + (flux_unc_to_mag_unc(0.057))**2))
+                neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
+                                        np.sqrt(w4flux_err**2 + (w4flux_values*0.057)**2))
+                
+##                    neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
+##                                        np.sqrt(w3mag_err**2 + (flux_unc_to_mag_unc(0.045))**2))
+##                    neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
+##                                            np.sqrt(w4mag_err**2+ (flux_unc_to_mag_unc(0.057))**2))
+##                    neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
+##                        np.sqrt(w3flux_err**2+(w3flux_values*0.045)**2))
+##                    neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
+##                             np.sqrt(w4flux_err**2+(w4flux_values*0.057)**2))
             except KeyError :
                 pass
             
