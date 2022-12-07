@@ -486,8 +486,8 @@ class WISE_Data:
         
         neowise_df['w2apmag'] = self.datatable['w2mag'][neowise_mask]
         neowise_df['w2apsig'] = self.datatable['w2sigm'][neowise_mask]    
-        neowise_df['w2apflux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
-        neowise_df['w2apfluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
+        neowise_df['w2apflux'] = mag_to_fluxdens(neowise_df['w2apmag'], self.f0_wise_4_6)
+        neowise_df['w2apfluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2apsig'])
 
         # Now for all the individual ap_mags, with different ap_sizes:
         for i in range(1,9) :
@@ -688,7 +688,7 @@ class WISE_Data:
             w2apmag_values = np.array(groups.median()["w2apmag"])
             w2apflux_values = np.array(groups.median()["w2apflux"])
             w2ap_mag_values = [np.array(groups.median()['w2apmag_'+str(i)]) for i in range(1,9)]
-            w2ap_flux_values = [np.array(groups.median()['w1apflux_'+str(i)]) for i in range(1,9)]            
+            w2ap_flux_values = [np.array(groups.median()['w2apflux_'+str(i)]) for i in range(1,9)]            
 
         if err_measure == "SEM" :
             w1mag_err = np.array(groups.sem()["w1mag"])
@@ -735,9 +735,11 @@ class WISE_Data:
         neowise_bin_df['w2apmag'] = unp.uarray(w2apmag_values,
                             np.sqrt(w2apmag_err**2 + w2mag_mean_nonlin_unc**2+ (0.0061)**2))
         neowise_bin_df['w1apflux'] = unp.uarray(w1apflux_values,
-                            np.sqrt(w1apflux_err**2 + w1mag_mean_nonlin_unc**2+ (0.0026)**2))
+                            np.sqrt(w1apflux_err**2 + w1mag_mean_nonlin_unc**2+\
+                                    (w1apflux_values*mag_unc_to_flux_unc(0.0026))**2))
         neowise_bin_df['w2apflux'] = unp.uarray(w2apflux_values,
-                            np.sqrt(w2apflux_err**2 + w2mag_mean_nonlin_unc**2+ (0.0061)**2))
+                            np.sqrt(w2apflux_err**2 + w2mag_mean_nonlin_unc**2+\
+                                    (w1apflux_values*mag_unc_to_flux_unc(0.0061))**2))
 
         for i in range(0,8):
             neowise_bin_df["w1apmag_"+str(i+1)] = unp.uarray(w1ap_mag_values[i],
