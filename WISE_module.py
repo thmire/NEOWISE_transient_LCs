@@ -679,15 +679,15 @@ class WISE_Data:
             w1flux_err = np.array(groups.sem()["w1flux"])
             w1apmag_err = np.array(groups.sem()["w1apmag"])
             w1apflux_err = np.array(groups.sem()["w1apflux"])
-            w1ap_mag_values = [np.array(groups.sem()['w1apmag_'+str(i)]) for i in range(1,9)]
-            w1ap_flux_values = [np.array(groups.sem()['w1apflux_'+str(i)]) for i in range(1,9)]
+            w1ap_mag_err_values = [np.array(groups.sem()['w1apmag_'+str(i)]) for i in range(1,9)]
+            w1ap_flux_err_values = [np.array(groups.sem()['w1apflux_'+str(i)]) for i in range(1,9)]
                                 
             w2mag_err = np.array(groups.sem()["w2mag"])
             w2flux_err = np.array(groups.sem()["w2flux"])
             w2apmag_err = np.array(groups.sem()["w2apmag"])
             w2apflux_err = np.array(groups.sem()["w2apflux"])
-            w2ap_mag_values = [np.array(groups.sem()['w2apmag_'+str(i)]) for i in range(1,9)]
-            w2ap_flux_values = [np.array(groups.sem()['w2apflux_'+str(i)]) for i in range(1,9)]
+            w2ap_mag_err_values = [np.array(groups.sem()['w2apmag_'+str(i)]) for i in range(1,9)]
+            w2ap_flux_err_values = [np.array(groups.sem()['w2apflux_'+str(i)]) for i in range(1,9)]
 
         
         
@@ -722,9 +722,23 @@ class WISE_Data:
                             np.sqrt(w1apflux_err**2 + w1mag_mean_nonlin_unc**2+ (0.0026)**2))
         neowise_bin_df['w2apflux'] = unp.uarray(w2apflux_values,
                             np.sqrt(w2apflux_err**2 + w2mag_mean_nonlin_unc**2+ (0.0061)**2))
-        
-       
-        
+
+        for i in range(0,8):
+            neowise_bin_df["w1apmag_"+str(i+1)] = unp.uarray(w1ap_mag_values[i],
+                            np.sqrt(w1ap_mag_err_values[i]**2 + w1mag_mean_nonlin_unc**2+ (0.0026)**2))
+            neowise_bin_df["w2apmag_"+str(i+1)] = unp.uarray(w2ap_mag_values[i],
+                            np.sqrt(w2ap_mag_err_values[i]**2 + w2mag_mean_nonlin_unc**2+ (0.0061)**2))
+            
+            neowise_bin_df["w1apflux_"+str(i+1)] = unp.uarray(w1ap_flux_values[i],
+                                                  np.sqrt(w1ap_flux_err_values[i]**2+\
+                                    (w1ap_flux_values[i]*mag_unc_to_flux_unc(0.0026))**2 +\
+                                                          w1flux_mean_non_lin_unc**2))
+            
+            neowise_bin_df["w2apflux_"+str(i+1)] = unp.uarray(w2ap_flux_values[i],
+                                                  np.sqrt(w2ap_flux_err_values[i]**2+\
+                                    (w2ap_flux_values[i]*mag_unc_to_flux_unc(0.0061))**2 +\
+                                                          w2flux_mean_non_lin_unc**2))
+
         
         if self.ALLWISE_datatable.empty != True :
             try :
