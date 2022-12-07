@@ -234,7 +234,7 @@ class WISE_Data:
         #self.author = "Erik Kool and Tom Reynolds"
         
     def position_diag(self,cut=None,contrast =[-200,500],overlay='yes',set_source=None,rad=10,
-                     diff = 2,download='yes',save='no'):
+                     diff = 2,download='yes',save='no',show_apertures=None):
     
         """
         
@@ -344,6 +344,22 @@ class WISE_Data:
                 ax.coords[1].set_ticks(spacing=0.5* u.arcmin)
                 ax.coords[1].set_major_formatter('dd:mm:ss')
                 ax.set_title(self.source + '\n' + self.WISE_name + " " +  set_source)
+
+                if show_apertures :
+                    for radius in [5.5,8.5,11,13.75,16.5,19.25,22,24.75]:
+                        c = SphericalCircle((self.pos[0] * u.deg, self.pos[1] * u.deg), radius * u.arcsec,
+                                    vertex_unit= u.deg,ls="--",alpha=0.5,lw=0.2,
+                                     edgecolor='yellow', facecolor='none',
+                                         transform=ax.get_transform('fk5'))
+                        ax.add_patch(c)
+                        
+                    for radius in [50,70]:
+                        c = SphericalCircle((self.pos[0] * u.deg, self.pos[1] * u.deg), radius * u.arcsec,
+                                    vertex_unit= u.deg,ls="--",alpha=0.5,lw=0.2,
+                                     edgecolor='xkcd:dark blue',facecolor='none',
+                                         transform=ax.get_transform('fk5'))
+                        ax.add_patch(c)
+                        
 
 #         else :
 #             fig=plt.figure(figsize=(10,10))
