@@ -124,6 +124,50 @@ def bins_W3_W4(data,filt,bins):
         #print(weighted_mags)
     return np.array(median_mags), np.array(SEM_errs)
 
+def IRAS_query(path,catalog,pos,radius,name="NoName"):
+    """
+    Function to query IRSA for data using the API.
+    
+    """
+
+    from astroquery.ipac.irsa import Irsa
+    import astropy.units as u
+    import astropy.coordinates as coord
+    import wget
+    import requests
+    
+    catalog_dict = {
+                    "AllWISE" : "allwise_p3as_mep",
+                    "NEOWISE" : "neowiser_p1bs_psd",
+                    "WISE"    : "allsky_4band_p1bs_psd",
+                    "WISE3bandCryo": "allsky_3band_p1bs_psd",
+                    "WISEPostCryo": "allsky_2band_p1bs_psd",
+                    }
+##    table = Irsa.query_region(SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs'),
+##                              catalog=catalog_dict[catalog],
+##                              spatial="Cone",
+##                              radius= radius * u.arcsec)
+    
+    #table.write(path + name + "_" + catalog + '.tbl', format='ascii')
+
+    url_stem = "https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query?"
+    catalog_key = "catalog="+ catalog_dict[catalog]
+    spatial_key = "spatial=" +"cone"
+    object_key = "objstr=" + str(pos[0]) + "d+" + str(pos[1]) + "d"
+    radius_key = "radius=" + str(radius)
+    radunits_key = "radunits=" + "arcsec"
+    outfmt_key = "outfmt=" + str(1)
+    output_cols = "short=" +str(0)
+
+    url =  url_stem +  "&".join([catalog_key,spatial_key,object_key,radius_key,
+                                 radunits_key,outfmt_key,output_cols]
+                                )
+    r = requests.get(url)
+    with open(path + name + "_" + catalog + '.tbl',"w") as fd:
+        fd.write(r.text)
+    
+    return url
+
 
 # Now the big class
 # WISE data class, has attributes: pandas table with info, galaxy?
@@ -156,7 +200,7 @@ class WISE_Data:
         A flag that switchs on if filtering removes all data
                 
     """
-    def __init__(self, file=None, file_2 = None,all_files_path=None,
+    def __init__(self, download=None, file=None, file_2 = None,all_files_path=None,
                  pos=None,source='galname?', allowed_sep=1,dist=None,WISE_name=""):
         """
         File parameter is IRSA data table
@@ -172,7 +216,12 @@ class WISE_Data:
         # get that from each individual data release.
         # TODO: make a seperate fucntion that downloads the datafiles so you dont
         #       need to use the IRSA online GUI
-        if not  all_files_path :
+
+        #if download :
+            
+
+        
+        if not all_files_path :
             all_files = [file]
             if file_2 :
                 all_files.append(file_2)
@@ -232,13 +281,12 @@ class WISE_Data:
                 WISE_datatable = read_df
             if filetype == "WISE3bandCryo":
                 WISE3bandCryo_datatable = read_df
-                self.WISE3bandCryo_datatable = WISE3bandCryo_datatable
+                #self.WISE3bandCryo_datatable = WISE3bandCryo_datatable
             if filetype == "WISEPostCryo":
                 WISEPostCryo_datatable = read_df                
 
         # Use multindexing to stick together all the data while retaining its source
         # Can then access with e.g. final_df.loc["NEOWISE"]
-        print(available_files)
         if "NEOWISE" not in available_files :
             NEOWISE_datatable = pd.df({})
         if "AllWISE" not in available_files :
@@ -248,7 +296,6 @@ class WISE_Data:
         if "WISE3bandCryo" not in available_files :
             WISE3bandCryo_datatable = pd.df({}) 
         if "WISEPostCryo" not in available_files :
-            print("no post cryo")
             WISEPostCryo_datatable = pd.df({})
             
         final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
