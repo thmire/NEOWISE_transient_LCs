@@ -179,22 +179,27 @@ class WISE_Data:
         else :
             all_files = glob.glob(all_files_path+"/*.tbl")
             
-        filetype = None
+        filetype = None; available_files = []
         for file_i in all_files :
             header = []
             for idx,line in enumerate(open(file_i).readlines()):
-                if "NEOWISE" in line :
+                if "NEOWISE-R Single Exposure (L1b)" in line :
                     filetype = "NEOWISE"
+                    available_files.append(filetype)
                     file = file_i
                 elif "AllWISE" in line:
                     filetype = "AllWISE"
+                    available_files.append(filetype)
                     file_2 = file_i
                 elif "WISE All-Sky Single Exposure" in line :
                     filetype = "WISE"
+                    available_files.append(filetype)
                 elif "WISE 3-Band Cryo" in line :
                     filetype = "WISE3bandCryo"
+                    available_files.append(filetype)
                 elif "WISE Post-Cryo" in line :
-                    filetype = "WISEPostCryo"     
+                    filetype = "WISEPostCryo"
+                    available_files.append(filetype)
                 if line.startswith('|'):
                     skiprows = idx + 4 # skip over comments and header info
                     for i in line.split('|')[1:-1]:
@@ -210,7 +215,8 @@ class WISE_Data:
             read_df['sep'] = pos_median.separation(
                 SkyCoord(read_df['ra']*u.deg,read_df['dec']*u.deg,frame='icrs')).arcsec
             if filetype == "NEOWISE" :
-                self.NEOWISE_datatable = read_df
+                NEOWISE_datatable = read_df
+                self.NEOWISE_datatable = NEOWISE_datatable
             if filetype == "AllWISE" :
                 # AllWISE does not have these flags, so force passing the check
                 read_df['ph_qual'] = '-'
@@ -220,17 +226,35 @@ class WISE_Data:
                     columns={'w1mpro_ep': 'w1mpro', 'w2mpro_ep': 'w2mpro','w1sigmpro_ep': 'w1sigmpro',
                              'w2sigmpro_ep': 'w2sigmpro','w3mpro_ep': 'w3mpro', 'w4mpro_ep': 'w4mpro',
                              'w3sigmpro_ep': 'w3sigmpro','w4sigmpro_ep': 'w4sigmpro'})
-                self.AllWISE_datatable = read_df
+                AllWISE_datatable = read_df
+                self.AllWISE_datatable = AllWISE_datatable
             if filetype == "WISE":
-                self.WISE_datatable = read_df
+                WISE_datatable = read_df
             if filetype == "WISE3bandCryo":
-                self.WISE3bandCryo_datatable = read_df
+                WISE3bandCryo_datatable = read_df
+                self.WISE3bandCryo_datatable = WISE3bandCryo_datatable
             if filetype == "WISEPostCryo":
-                self.WISEPostCryo_datatable = read_df                
-     
-        final_df = self.NEOWISE_datatable.append(self.AllWISE_datatable)
-        
+                WISEPostCryo_datatable = read_df                
 
+        # Use multindexing to stick together all the data while retaining its source
+        # Can then access with e.g. final_df.loc["NEOWISE"]
+        print(available_files)
+        if "NEOWISE" not in available_files :
+            NEOWISE_datatable = pd.df({})
+        if "AllWISE" not in available_files :
+            AllWISE_datatable = pd.df({})
+        if "WISE" not in available_files :
+            WISE_datatable = pd.df({}) 
+        if "WISE3bandCryo" not in available_files :
+            WISE3bandCryo_datatable = pd.df({}) 
+        if "WISEPostCryo" not in available_files :
+            print("no post cryo")
+            WISEPostCryo_datatable = pd.df({})
+            
+        final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
+                              WISE_datatable,WISE3bandCryo_datatable,WISEPostCryo_datatable),
+                             keys=["NEOWISE","AllWISE","WISE","WISE3bandCryo","WISEPostCryo"])
+    
         self.datatable = final_df
         self.allowed_sep = allowed_sep
         self.filtered = 'no'
