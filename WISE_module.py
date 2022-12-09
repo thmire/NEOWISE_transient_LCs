@@ -166,58 +166,72 @@ class WISE_Data:
         if file == None and file_2 == None and all_files_path ==None :
             print("Please give me some data!")
             return
-        #process NEOWISE data
-        neowise_header = []
-        for idx,line in enumerate(open(file).readlines()):
-            if line.startswith('|'):
-                skiprows = idx + 4 # skip over comments and header info
-                for i in line.split('|')[1:-1]:
-                    neowise_header.append(i.lstrip().rstrip())
-                break
-        # Read in data in Pandas dataframe
-        neowise_read_df = pd.read_fwf(file, skiprows = skiprows, header = None, names = neowise_header)
-        ra_median = np.median(neowise_read_df['ra'])
-        dec_median = np.median(neowise_read_df['dec'])
-        if pos == None :
-            pos_median = SkyCoord(ra_median*u.deg,dec_median*u.deg, frame='icrs')
+
+        # Go through all the files in the folder given and get all the data parsed
+        # This is here because the AllWISE data lacks aperture phot, so we need to
+        # get that from each individual data release.
+        # TODO: make a seperate fucntion that downloads the datafiles so you dont
+        #       need to use the IRSA online GUI
+        if not  all_files_path :
+            all_files = [file]
+            if file_2 :
+                all_files.append(file_2)
         else :
-            pos_median =SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs')
-        neowise_read_df['sep'] = pos_median.separation(
-            SkyCoord(neowise_read_df['ra']*u.deg,neowise_read_df['dec']*u.deg,frame='icrs')).arcsec
-        self.NEOWISE_datatable = neowise_read_df
-        #process ALLWISE data
-        if file_2 != None :
-            neowise_header = []
-            for idx,line in enumerate(open(file_2).readlines()):
+            all_files = glob.glob(all_files_path+"/*.tbl")
+            
+        filetype = None
+        for file_i in all_files :
+            header = []
+            for idx,line in enumerate(open(file_i).readlines()):
+                if "NEOWISE" in line :
+                    filetype = "NEOWISE"
+                    file = file_i
+                elif "AllWISE" in line:
+                    filetype = "AllWISE"
+                    file_2 = file_i
+                elif "WISE All-Sky Single Exposure" in line :
+                    filetype = "WISE"
+                elif "WISE 3-Band Cryo" in line :
+                    filetype = "WISE3bandCryo"
+                elif "WISE Post-Cryo" in line :
+                    filetype = "WISEPostCryo"     
                 if line.startswith('|'):
                     skiprows = idx + 4 # skip over comments and header info
                     for i in line.split('|')[1:-1]:
-                        neowise_header.append(i.lstrip().rstrip())
+                        header.append(i.lstrip().rstrip())
                     break
-            # Read in data in Pandas dataframe
-            ALLWISE_read_df = pd.read_fwf(file_2, skiprows = skiprows, header = None, names = neowise_header)
-            # ALLWISE does not have these flags, so force passing the check
-            ALLWISE_read_df['ph_qual'] = '-'
-            ALLWISE_read_df['qual_frame'] = 1
-            #df = df.rename(columns={'oldName1': 'newName1', 'oldName2': 'newName2'})
-            ALLWISE_read_df = ALLWISE_read_df.rename(
-                columns={'w1mpro_ep': 'w1mpro', 'w2mpro_ep': 'w2mpro','w1sigmpro_ep': 'w1sigmpro',
-                         'w2sigmpro_ep': 'w2sigmpro','w3mpro_ep': 'w3mpro', 'w4mpro_ep': 'w4mpro',
-                         'w3sigmpro_ep': 'w3sigmpro','w4sigmpro_ep': 'w4sigmpro'})
-            ra_median = np.median(ALLWISE_read_df['ra'])
-            dec_median = np.median(ALLWISE_read_df['dec'])
+            read_df = pd.read_fwf(file_i, skiprows = skiprows, header = None, names = header)
+            ra_median = np.median(read_df['ra'])
+            dec_median = np.median(read_df['dec'])
             if pos == None :
                 pos_median = SkyCoord(ra_median*u.deg,dec_median*u.deg, frame='icrs')
             else :
                 pos_median =SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs')
-            ALLWISE_read_df['sep'] = pos_median.separation(
-                SkyCoord(ALLWISE_read_df['ra']*u.deg,ALLWISE_read_df['dec']*u.deg,frame='icrs')).arcsec
-            self.ALLWISE_datatable = ALLWISE_read_df
-            neowise_read_df = neowise_read_df.append(ALLWISE_read_df)
-        else :
-            self.ALLWISE_datatable = pd.DataFrame()
+            read_df['sep'] = pos_median.separation(
+                SkyCoord(read_df['ra']*u.deg,read_df['dec']*u.deg,frame='icrs')).arcsec
+            if filetype == "NEOWISE" :
+                self.NEOWISE_datatable = read_df
+            if filetype == "AllWISE" :
+                # AllWISE does not have these flags, so force passing the check
+                read_df['ph_qual'] = '-'
+                read_df['qual_frame'] = 1
+                # Rename some cols for consistency
+                read_df = read_df.rename(
+                    columns={'w1mpro_ep': 'w1mpro', 'w2mpro_ep': 'w2mpro','w1sigmpro_ep': 'w1sigmpro',
+                             'w2sigmpro_ep': 'w2sigmpro','w3mpro_ep': 'w3mpro', 'w4mpro_ep': 'w4mpro',
+                             'w3sigmpro_ep': 'w3sigmpro','w4sigmpro_ep': 'w4sigmpro'})
+                self.AllWISE_datatable = read_df
+            if filetype == "WISE":
+                self.WISE_datatable = read_df
+            if filetype == "WISE3bandCryo":
+                self.WISE3bandCryo_datatable = read_df
+            if filetype == "WISEPostCryo":
+                self.WISEPostCryo_datatable = read_df                
+     
+        final_df = self.NEOWISE_datatable.append(self.AllWISE_datatable)
+        
 
-        self.datatable = neowise_read_df
+        self.datatable = final_df
         self.allowed_sep = allowed_sep
         self.filtered = 'no'
         self.binned = 'no'
@@ -524,9 +538,9 @@ class WISE_Data:
             neowise_extras[i] = self.datatable[i][mask]
         self.companion_data = neowise_extras
         
-        if self.ALLWISE_datatable.empty != True :
+        if self.AllWISE_datatable.empty != True :
             try :
-                if self.ALLWISE_datatable.empty == False :
+                if self.AllWISE_datatable.empty == False :
                     neowise_df['w3mag'] = self.datatable['w3mpro'][neowise_mask]
                     neowise_df['w3sig'] = self.datatable['w3sigmpro'][neowise_mask]
                     neowise_df['w3flux'] = mag_to_fluxdens(neowise_df['w3mag'], self.f0_W3)
@@ -763,7 +777,7 @@ class WISE_Data:
                                                           w2flux_mean_non_lin_unc**2))
 
         
-        if self.ALLWISE_datatable.empty != True :
+        if self.AllWISE_datatable.empty != True :
             print("Trying W3")
             try :
                 
