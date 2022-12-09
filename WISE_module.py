@@ -156,11 +156,16 @@ class WISE_Data:
         A flag that switchs on if filtering removes all data
                 
     """
-    def __init__(self, file, file_2 = None, pos=None,source='galname?', allowed_sep=1,dist=None,WISE_name=""):
+    def __init__(self, file=None, file_2 = None,all_files_path=None,
+                 pos=None,source='galname?', allowed_sep=1,dist=None,WISE_name=""):
         """
         File parameter is IRSA data table
         If you want more than one file, set file_2 = filename
         """
+
+        if file == None and file_2 == None and all_files_path ==None :
+            print("Please give me some data!")
+            return
         #process NEOWISE data
         neowise_header = []
         for idx,line in enumerate(open(file).readlines()):
