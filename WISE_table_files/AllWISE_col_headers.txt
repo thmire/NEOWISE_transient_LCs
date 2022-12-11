@@ -1,0 +1,54 @@
+\ cntr_mf 
+\ ___ Reference source cntr from Multiframe source_id_mf
+\ source_id_mf 
+\ ___ Source id from Multiframe (coadd id and source number)
+\ ra (deg) 
+\ ___ right ascension (J2000)
+\ dec (deg) 
+\ ___ declination (J2000)
+\ nb 
+\ ___ number of PSF components used in profile fit for source
+\ na 
+\ ___ active deblend flag (=1 if actively deblended)
+\ cc_flags 
+\ ___ contamination and confusion flags affecting the source in each band
+\ cat 
+\ ___ flag indicating whether source will be in catalog  1= in ALLWISE Catalog
+\ frame_id 
+\ ___ frameset identifier
+\ mjd (day) 
+\ ___ modified Julian date of the mid-point of the observation of the frame
+\ w1mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 1
+\ w1sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 1
+\ w1rchi2_ep 
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 1
+\ w2mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 2
+\ w2sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 2
+\ w2rchi2_ep 
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 2
+\ w3mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 3
+\ w3sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 3
+\ w3rchi2_ep 
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 3
+\ w4mpro_ep (mag) 
+\ ___ Single-exposure profile-fit  magnitude, band 4
+\ w4sigmpro_ep (mag) 
+\ ___ Single-exposure profile-fit photometric measurement uncertainty, band 4
+\ w4rchi2_ep 
+\ ___ Reduced chi^2 of single-exposure profile-fit, band 4
+\ qi_fact 
+\ ___ Frame image quality score
+\ saa_sep (deg) 
+\ ___ SAA separation. Distance from frame center to SAA boundary
+\ moon_masked 
+\ ___ flag (0/1) indicating whether frame is within the moon-mask area in each band
+\ dist (arcsec) 
+\ ___ Distance between the target position and each source in arcsec.
+\ angle (deg) 
+\ ___ Position Angle in degree.

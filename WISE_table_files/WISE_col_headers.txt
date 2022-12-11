@@ -1,0 +1,424 @@
+\ ra (deg) 
+\ ___ right ascension (J2000)
+\ dec (deg) 
+\ ___ declination (J2000)
+\ sigra (arcsec) 
+\ ___ uncertainty in RA
+\ sigdec (arcsec) 
+\ ___ uncertainty in DEC
+\ sigradec (arcsec) 
+\ ___ uncertainty cross-term
+\ glon (deg) 
+\ ___ galactic longitude
+\ glat (deg) 
+\ ___ galactic latitude
+\ elon (deg) 
+\ ___ ecliptic longitude
+\ elat (deg) 
+\ ___ ecliptic latitude
+\ w1x (pix) 
+\ ___ x-pixel coordinate, band 1
+\ w1y (pix) 
+\ ___ y-pixel coordinate, band 1
+\ w2x (pix) 
+\ ___ x-pixel coordinate, band 2
+\ w2y (pix) 
+\ ___ y-pixel coordinate, band 2
+\ w3x (pix) 
+\ ___ x-pixel coordinate, band 3
+\ w3y (pix) 
+\ ___ y-pixel coordinate, band 3
+\ w4x (pix) 
+\ ___ x-pixel coordinate, band 4
+\ w4y (pix) 
+\ ___ y-pixel coordinate, band 4
+\ cntr 
+\ ___ unique entry counter (key) number
+\ source_id 
+\ ___ unique source ID (scan ID, frame num, and source number)
+\ frame_num 
+\ ___ frame number
+\ scan_id 
+\ ___ scan ID
+\ src 
+\ ___ source number in frame
+\ w1mpro (mag) 
+\ ___ instrumental profile-fit photometry magnitude, band 1
+\ w1sigmpro (mag) 
+\ ___ instrumental profile-fit photometry flux uncertainty in mag units, band 1
+\ w1snr 
+\ ___ instrumental profile-fit photometry S/N ratio, band 1
+\ w1rchi2 
+\ ___ instrumental profile-fit photometry reduced chi^2, band 1
+\ w2mpro (mag) 
+\ ___ instrumental profile-fit photometry magnitude, band 2
+\ w2sigmpro (mag) 
+\ ___ instrumental profile-fit photometry flux uncertainty in mag units, band 2
+\ w2snr 
+\ ___ instrumental profile-fit photometry S/N ratio, band 2
+\ w2rchi2 
+\ ___ instrumental profile-fit photometry reduced chi^2, band 2
+\ w3mpro (mag) 
+\ ___ instrumental profile-fit photometry magnitude, band 3
+\ w3sigmpro (mag) 
+\ ___ instrumental profile-fit photometry flux uncertainty in mag units, band 3
+\ w3snr 
+\ ___ instrumental profile-fit photometry S/N ratio, band 3
+\ w3rchi2 
+\ ___ instrumental profile-fit photometry reduced chi^2, band 3
+\ w4mpro (mag) 
+\ ___ instrumental profile-fit photometry magnitude, band 4
+\ w4sigmpro (mag) 
+\ ___ instrumental profile-fit photometry flux uncertainty in mag units, band 4
+\ w4snr 
+\ ___ instrumental profile-fit photometry S/N ratio, band 4
+\ w4rchi2 
+\ ___ instrumental profile-fit photometry reduced chi^2, band 4
+\ rchi2 
+\ ___ instrumental profile-fit photometry reduced chi squared, total
+\ nb 
+\ ___ number of blend components used in each fit
+\ na 
+\ ___ active deblend flag (=1 if actively deblended)
+\ w1sat 
+\ ___ fraction of pixels saturated, band 1
+\ w2sat 
+\ ___ fraction of pixels saturated, band 2
+\ w3sat 
+\ ___ fraction of pixels saturated, band 3
+\ w4sat 
+\ ___ fraction of pixels saturated, band 4
+\ satnum 
+\ ___ minimum sample at which saturation occurs, 1 char per band
+\ cc_flags 
+\ ___ prioritized artifacts affecting the source in each band
+\ det_bit 
+\ ___ bit-encoded integer indicating detection for each band
+\ ph_qual 
+\ ___ photometric quality of each band (A=highest, U=upper limit)
+\ sso_flg 
+\ ___ known solar system object association flag (0=no association, >0=association)
+\ qual_frame 
+\ ___ quality score value for frame
+\ qi_fact 
+\ ___ quality factor qi value for frame: image quality
+\ saa_sep (deg) 
+\ ___ distance from frame center to SAA boundary
+\ dtanneal (sec) 
+\ ___ time since last anneal
+\ moon_masked 
+\ ___ flag (0/1) indicating whether frame is within the moon-mask area in each band
+\ mjd (mjdate) 
+\ ___ modified Julian date of the mid-point of the observation of the frame
+\ w1frtr 
+\ ___ fraction of pixels classified as transient, band 1
+\ w2frtr 
+\ ___ fraction of pixels classified as transient, band 2
+\ w3frtr 
+\ ___ fraction of pixels classified as transient, band 3
+\ w4frtr 
+\ ___ fraction of pixels classified as transient, band 4
+\ w1cc_map 
+\ ___ contamination and confusion bit array for the source in band 1
+\ w1cc_map_str 
+\ ___ contamination and confusion character array for the source in band 1
+\ w2cc_map 
+\ ___ contamination and confusion bit array for the source in band 2
+\ w2cc_map_str 
+\ ___ contamination and confusion character array for the source in band 2
+\ w3cc_map 
+\ ___ contamination and confusion bit array for the source in band 3
+\ w3cc_map_str 
+\ ___ contamination and confusion character array for the source in band 3
+\ w4cc_map 
+\ ___ contamination and confusion bit array for the source in band 4
+\ w4cc_map_str 
+\ ___ contamination and confusion character array for the source in band 4
+\ w1sky (dn) 
+\ ___ sky background value, band 1
+\ w1sigsk (dn) 
+\ ___ sky background value uncertainty, band 1
+\ w1conf (dn) 
+\ ___ sky confusion based on the uncertainty images, band 1
+\ w2sky (dn) 
+\ ___ sky background value, band 2
+\ w2sigsk (dn) 
+\ ___ sky background value uncertainty, band 2
+\ w2conf (dn) 
+\ ___ sky confusion based on the uncertainty images, band 2
+\ w3sky (dn) 
+\ ___ sky background value, band 3
+\ w3sigsk (dn) 
+\ ___ sky background value uncertainty, band 3
+\ w3conf (dn) 
+\ ___ sky confusion based on the uncertainty images, band 3
+\ w4sky (dn) 
+\ ___ sky background value, band 4
+\ w4sigsk (dn) 
+\ ___ sky background value uncertainty, band 4
+\ w4conf (dn) 
+\ ___ sky confusion based on the uncertainty images, band 4
+\ w1flux (dn) 
+\ ___ profile-fit photometry raw flux, band 1
+\ w1sigflux (dn) 
+\ ___ profile-fit photometry raw flux uncertainty, band 1
+\ w2flux (dn) 
+\ ___ profile-fit photometry raw flux, band 2
+\ w2sigflux (dn) 
+\ ___ profile-fit photometry raw flux uncertainty, band 2
+\ w3flux (dn) 
+\ ___ profile-fit photometry raw flux, band 3
+\ w3sigflux (dn) 
+\ ___ profile-fit photometry raw flux uncertainty, band 3
+\ w4flux (dn) 
+\ ___ profile-fit photometry raw flux, band 4
+\ w4sigflux (dn) 
+\ ___ profile-fit photometry raw flux uncertainty, band 4
+\ w1mag (mag) 
+\ ___ instrumental standard aperture mag w/ aperture correction applied, band 1
+\ w1sigm (mag) 
+\ ___ instrumental standard aperture mag uncertainty, band 1
+\ w1flg 
+\ ___ instrumental standard aperture flag, band 1
+\ w1mcor (mag) 
+\ ___ instrumental aperture correction, band 1, std ap
+\ w2mag (mag) 
+\ ___ instrumental standard aperture mag w/ aperture correction applied, band 2
+\ w2sigm (mag) 
+\ ___ instrumental standard aperture mag uncertainty, band 2
+\ w2flg 
+\ ___ instrumental standard aperture flag, band 2
+\ w2mcor (mag) 
+\ ___ instrumental aperture correction, band 2, std ap
+\ w3mag (mag) 
+\ ___ instrumental standard aperture mag w/ aperture correction applied, band 3
+\ w3sigm (mag) 
+\ ___ instrumental standard aperture mag uncertainty, band 3
+\ w3flg 
+\ ___ instrumental standard aperture flag, band 3
+\ w3mcor (mag) 
+\ ___ instrumental aperture correction, band 3, std ap
+\ w4mag (mag) 
+\ ___ instrumental standard aperture mag w/ aperture correction applied, band 4
+\ w4sigm (mag) 
+\ ___ instrumental standard aperture mag uncertainty, band 4
+\ w4flg 
+\ ___ instrumental standard aperture flag, band 4
+\ w4mcor (mag) 
+\ ___ instrumental aperture correction, band 4, std ap
+\ w1mag_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag, band 1
+\ w1sigm_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag uncertainty, band 1
+\ w1flg_1 
+\ ___ aperture 1 instrumental aperture flag, band 1
+\ w2mag_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag, band 2
+\ w2sigm_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag uncertainty, band 2
+\ w2flg_1 
+\ ___ aperture 1 instrumental aperture flag, band 2
+\ w3mag_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag, band 3
+\ w3sigm_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag uncertainty, band 3
+\ w3flg_1 
+\ ___ aperture 1 instrumental aperture flag, band 3
+\ w4mag_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag, band 4
+\ w4sigm_1 (mag) 
+\ ___ aperture 1 instrumental aperture mag uncertainty, band 4
+\ w4flg_1 
+\ ___ aperture 1 instrumental aperture flag, band 4
+\ w1mag_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag, band 1
+\ w1sigm_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag uncertainty, band 1
+\ w1flg_2 
+\ ___ aperture 2 instrumental aperture flag, band 1
+\ w2mag_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag, band 2
+\ w2sigm_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag uncertainty, band 2
+\ w2flg_2 
+\ ___ aperture 2 instrumental aperture flag, band 2
+\ w3mag_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag, band 3
+\ w3sigm_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag uncertainty, band 3
+\ w3flg_2 
+\ ___ aperture 2 instrumental aperture flag, band 3
+\ w4mag_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag, band 4
+\ w4sigm_2 (mag) 
+\ ___ aperture 2 instrumental aperture mag uncertainty, band 4
+\ w4flg_2 
+\ ___ aperture 2 instrumental aperture flag, band 4
+\ w1mag_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag, band 1
+\ w1sigm_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag uncertainty, band 1
+\ w1flg_3 
+\ ___ aperture 3 instrumental aperture flag, band 1
+\ w2mag_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag, band 2
+\ w2sigm_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag uncertainty, band 2
+\ w2flg_3 
+\ ___ aperture 3 instrumental aperture flag, band 2
+\ w3mag_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag, band 3
+\ w3sigm_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag uncertainty, band 3
+\ w3flg_3 
+\ ___ aperture 3 instrumental aperture flag, band 3
+\ w4mag_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag, band 4
+\ w4sigm_3 (mag) 
+\ ___ aperture 3 instrumental aperture mag uncertainty, band 4
+\ w4flg_3 
+\ ___ aperture 3 instrumental aperture flag, band 4
+\ w1mag_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag, band 1
+\ w1sigm_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag uncertainty, band 1
+\ w1flg_4 
+\ ___ aperture 4 instrumental aperture flag, band 1
+\ w2mag_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag, band 2
+\ w2sigm_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag uncertainty, band 2
+\ w2flg_4 
+\ ___ aperture 4 instrumental aperture flag, band 2
+\ w3mag_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag, band 3
+\ w3sigm_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag uncertainty, band 3
+\ w3flg_4 
+\ ___ aperture 4 instrumental aperture flag, band 3
+\ w4mag_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag, band 4
+\ w4sigm_4 (mag) 
+\ ___ aperture 4 instrumental aperture mag uncertainty, band 4
+\ w4flg_4 
+\ ___ aperture 4 instrumental aperture flag, band 4
+\ w1mag_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag, band 1
+\ w1sigm_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag uncertainty, band 1
+\ w1flg_5 
+\ ___ aperture 5 instrumental aperture flag, band 1
+\ w2mag_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag, band 2
+\ w2sigm_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag uncertainty, band 2
+\ w2flg_5 
+\ ___ aperture 5 instrumental aperture flag, band 2
+\ w3mag_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag, band 3
+\ w3sigm_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag uncertainty, band 3
+\ w3flg_5 
+\ ___ aperture 5 instrumental aperture flag, band 3
+\ w4mag_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag, band 4
+\ w4sigm_5 (mag) 
+\ ___ aperture 5 instrumental aperture mag uncertainty, band 4
+\ w4flg_5 
+\ ___ aperture 5 instrumental aperture flag, band 4
+\ w1mag_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag, band 1
+\ w1sigm_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag uncertainty, band 1
+\ w1flg_6 
+\ ___ aperture 6 instrumental aperture flag, band 1
+\ w2mag_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag, band 2
+\ w2sigm_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag uncertainty, band 2
+\ w2flg_6 
+\ ___ aperture 6 instrumental aperture flag, band 2
+\ w3mag_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag, band 3
+\ w3sigm_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag uncertainty, band 3
+\ w3flg_6 
+\ ___ aperture 6 instrumental aperture flag, band 3
+\ w4mag_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag, band 4
+\ w4sigm_6 (mag) 
+\ ___ aperture 6 instrumental aperture mag uncertainty, band 4
+\ w4flg_6 
+\ ___ aperture 6 instrumental aperture flag, band 4
+\ w1mag_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag, band 1
+\ w1sigm_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag uncertainty, band 1
+\ w1flg_7 
+\ ___ aperture 7 instrumental aperture flag, band 1
+\ w2mag_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag, band 2
+\ w2sigm_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag uncertainty, band 2
+\ w2flg_7 
+\ ___ aperture 7 instrumental aperture flag, band 2
+\ w3mag_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag, band 3
+\ w3sigm_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag uncertainty, band 3
+\ w3flg_7 
+\ ___ aperture 7 instrumental aperture flag, band 3
+\ w4mag_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag, band 4
+\ w4sigm_7 (mag) 
+\ ___ aperture 7 instrumental aperture mag uncertainty, band 4
+\ w4flg_7 
+\ ___ aperture 7 instrumental aperture flag, band 4
+\ w1mag_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag, band 1
+\ w1sigm_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag uncertainty, band 1
+\ w1flg_8 
+\ ___ aperture 8 instrumental aperture flag, band 1
+\ w2mag_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag, band 2
+\ w2sigm_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag uncertainty, band 2
+\ w2flg_8 
+\ ___ aperture 8 instrumental aperture flag, band 2
+\ w3mag_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag, band 3
+\ w3sigm_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag uncertainty, band 3
+\ w3flg_8 
+\ ___ aperture 8 instrumental aperture flag, band 3
+\ w4mag_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag, band 4
+\ w4sigm_8 (mag) 
+\ ___ aperture 8 instrumental aperture mag uncertainty, band 4
+\ w4flg_8 
+\ ___ aperture 8 instrumental aperture flag, band 4
+\ tmass_key 
+\ ___ closest associated 2MASS All-Sky Release PSC key
+\ r_2mass (arcsec) 
+\ ___ radial offset between WISE src and associated 2MASS src
+\ pa_2mass (deg) 
+\ ___ position angle (E of N) of vector from WISE src to associated 2MASS src
+\ n_2mass 
+\ ___ number of 2MASS All-Sky PSC entries found within search radius of WISE src
+\ j_m_2mass (mag) 
+\ ___ J magnitude entry of the associated 2MASS All-Sky PSC source
+\ j_msig_2mass (mag) 
+\ ___ J photometric uncertainty of the associated 2MASS All-Sky PSC source
+\ h_m_2mass (mag) 
+\ ___ H magnitude entry of the associated 2MASS All-Sky PSC source
+\ h_msig_2mass (mag) 
+\ ___ H photometric uncertainty of the associated 2MASS All-Sky PSC source
+\ k_m_2mass (mag) 
+\ ___ Ks magnitude entry of the associated 2MASS All-Sky PSC source
+\ k_msig_2mass (mag) 
+\ ___ Ks photometric uncertainty of the associated 2MASS All-Sky PSC source
+\ dist (arcsec) 
+\ ___ Distance between the target position and each source in arcsec.
+\ angle (deg) 
+\ ___ Position Angle in degree.

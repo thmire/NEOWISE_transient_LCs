@@ -135,6 +135,12 @@ def IRAS_query(path,catalog,pos,radius,name="NoName"):
     import astropy.coordinates as coord
     import wget
     import requests
+
+    import os
+    # Get location of this file
+    filepath = os.path.dirname(os.path.abspath(__file__))
+    WISE_tables_path = filepath + "/WISE_table_files/"
+    
     
     catalog_dict = {
                     "AllWISE" : "allwise_p3as_mep",
@@ -150,23 +156,81 @@ def IRAS_query(path,catalog,pos,radius,name="NoName"):
     
     #table.write(path + name + "_" + catalog + '.tbl', format='ascii')
 
-    url_stem = "https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query?"
-    catalog_key = "catalog="+ catalog_dict[catalog]
-    spatial_key = "spatial=" +"cone"
-    object_key = "objstr=" + str(pos[0]) + "d+" + str(pos[1]) + "d"
-    radius_key = "radius=" + str(radius)
-    radunits_key = "radunits=" + "arcsec"
-    outfmt_key = "outfmt=" + str(1)
-    output_cols = "short=" +str(0)
+    if catalog == "all" :
+        catalogs = [catalog_dict[key] for key in catalog_dict.keys()]
+        print("Downloading all the WISE data, this can take a minute or so")
+    else :
+        catalogs = [catalog_dict[catalog]]
+        print("Downloading "+ str(catalog) + " data only")
 
-    url =  url_stem +  "&".join([catalog_key,spatial_key,object_key,radius_key,
-                                 radunits_key,outfmt_key,output_cols]
+    for cat in catalogs :
+        url_stem = "https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query?"
+        catalog_key = "catalog="+ cat
+        spatial_key = "spatial=" +"cone"
+        object_key = "objstr=" + str(pos[0]) + "d+" + str(pos[1]) + "d"
+        radius_key = "radius=" + str(radius)
+        radunits_key = "radunits=" + "arcsec"
+        outfmt_key = "outfmt=" + str(1)
+        outrows_key = "outrows="+str(100000)
+
+        cols_list = []
+        if cat == "neowiser_p1bs_psd" :
+            with open(WISE_tables_path + "NEOWISE_col_headers.txt","r") as fd :
+                lines = fd.readlines()
+                for line in lines:
+                    if "___" not in line :                
+                        line = line.split(" ")
+                        if line[1] != "angle" and line[1] != "dist":
+                            cols_list.append(line[1])
+            col_key = "selcols=" + ",".join(cols_list)
+        if cat == "allwise_p3as_mep" :
+            with open(WISE_tables_path + "AllWISE_col_headers.txt","r") as fd :
+                lines = fd.readlines()
+                for line in lines:
+                    if "___" not in line :                
+                        line = line.split(" ")
+                        if line[1] != "angle" and line[1] != "dist":
+                            cols_list.append(line[1])
+            col_key = "selcols=" + ",".join(cols_list)
+            
+        if cat in "allsky_4band_p1bs_psd":
+            with open(WISE_tables_path + "WISE_col_headers.txt","r") as fd :
+                lines = fd.readlines()
+                for line in lines:
+                    if "___" not in line :                
+                        line = line.split(" ")
+                        if line[1] != "angle" and line[1] != "dist":
+                            cols_list.append(line[1])
+            col_key = "selcols=" + ",".join(cols_list)
+        if cat == "allsky_3band_p1bs_psd":
+            with open(WISE_tables_path + "3bandWISE_col_headers.txt","r") as fd :
+                lines = fd.readlines()
+                for line in lines:
+                    if "___" not in line :                
+                        line = line.split(" ")
+                        if line[1] != "angle" and line[1] != "dist":
+                            cols_list.append(line[1])
+            col_key = "selcols=" + ",".join(cols_list)
+            
+        if cat == "allsky_2band_p1bs_psd":
+            with open(WISE_tables_path + "2bandWISE_col_headers.txt","r") as fd :
+                lines = fd.readlines()
+                for line in lines:
+                    if "___" not in line :                
+                        line = line.split(" ")
+                        if line[1] != "angle" and line[1] != "dist":
+                            cols_list.append(line[1])
+            col_key = "selcols=" + ",".join(cols_list)
+            
+        url =  url_stem +  "&".join([catalog_key,spatial_key,object_key,radius_key,
+                                 radunits_key,outfmt_key,outrows_key,col_key]
                                 )
-    r = requests.get(url)
-    with open(path + name + "_" + catalog + '.tbl',"w") as fd:
-        fd.write(r.text)
     
-    return url
+        r = requests.get(url)
+        with open(path + name + "_" + cat + '.tbl',"w") as fd:
+            fd.write(r.text)
+    
+    #return url
 
 
 # Now the big class
@@ -2016,7 +2080,7 @@ def mag_minmax(data):
     w1_mag_max = np.nanmax(unp.nominal_values(data.binned_data['w1mag']))
     w2_mag_max = np.nanmax(unp.nominal_values(data.binned_data['w2mag']))
     
-    return((w1_mag_max,w1_mag_min),(w2_mag_max,w2_mag_min))
+    ((w1_mag_max,w1_mag_min),(w2_mag_max,w2_mag_min))
        
     
     
