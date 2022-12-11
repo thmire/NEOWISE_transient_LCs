@@ -22,6 +22,7 @@ from uncertainties.umath import *
 from uncertainties import unumpy as unp
 from uncertainties import ufloat_fromstr
 import pandas as pd
+from pandas.errors import EmptyDataError
 import pyphot
 import pyphot.ezunits.pint as pint
 import scipy.constants as const
@@ -313,54 +314,61 @@ class WISE_Data:
                 elif "WISE Post-Cryo" in line :
                     filetype = "WISEPostCryo"
                     available_files.append(filetype)
+                    
                 if line.startswith('|'):
                     skiprows = idx + 4 # skip over comments and header info
                     for i in line.split('|')[1:-1]:
                         header.append(i.lstrip().rstrip())
                     break
-            read_df = pd.read_fwf(file_i, skiprows = skiprows, header = None, names = header)
-            ra_median = np.median(read_df['ra'])
-            dec_median = np.median(read_df['dec'])
-            if pos == None :
-                pos_median = SkyCoord(ra_median*u.deg,dec_median*u.deg, frame='icrs')
-            else :
-                pos_median =SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs')
-            read_df['sep'] = pos_median.separation(
-                SkyCoord(read_df['ra']*u.deg,read_df['dec']*u.deg,frame='icrs')).arcsec
-            if filetype == "NEOWISE" :
-                NEOWISE_datatable = read_df
-                self.NEOWISE_datatable = NEOWISE_datatable
-            if filetype == "AllWISE" :
-                # AllWISE does not have these flags, so force passing the check
-                read_df['ph_qual'] = '-'
-                read_df['qual_frame'] = 1
-                # Rename some cols for consistency
-                read_df = read_df.rename(
-                    columns={'w1mpro_ep': 'w1mpro', 'w2mpro_ep': 'w2mpro','w1sigmpro_ep': 'w1sigmpro',
-                             'w2sigmpro_ep': 'w2sigmpro','w3mpro_ep': 'w3mpro', 'w4mpro_ep': 'w4mpro',
-                             'w3sigmpro_ep': 'w3sigmpro','w4sigmpro_ep': 'w4sigmpro'})
-                AllWISE_datatable = read_df
-                self.AllWISE_datatable = AllWISE_datatable
-            if filetype == "WISE":
-                WISE_datatable = read_df
-            if filetype == "WISE3bandCryo":
-                WISE3bandCryo_datatable = read_df
-                #self.WISE3bandCryo_datatable = WISE3bandCryo_datatable
-            if filetype == "WISEPostCryo":
-                WISEPostCryo_datatable = read_df                
+            print(file_i,skiprows)
+            try :
+                read_df = pd.read_fwf(file_i, skiprows = skiprows, header = None, names = header)
+                ra_median = np.median(read_df['ra'])
+                dec_median = np.median(read_df['dec'])
+                if pos == None :
+                    pos_median = SkyCoord(ra_median*u.deg,dec_median*u.deg, frame='icrs')
+                else :
+                    pos_median =SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs')
+                read_df['sep'] = pos_median.separation(
+                    SkyCoord(read_df['ra']*u.deg,read_df['dec']*u.deg,frame='icrs')).arcsec
+                if filetype == "NEOWISE" :
+                    NEOWISE_datatable = read_df
+                    self.NEOWISE_datatable = NEOWISE_datatable
+                if filetype == "AllWISE" :
+                    # AllWISE does not have these flags, so force passing the check
+                    read_df['ph_qual'] = '-'
+                    read_df['qual_frame'] = 1
+                    # Rename some cols for consistency
+                    read_df = read_df.rename(
+                        columns={'w1mpro_ep': 'w1mpro', 'w2mpro_ep': 'w2mpro','w1sigmpro_ep': 'w1sigmpro',
+                                 'w2sigmpro_ep': 'w2sigmpro','w3mpro_ep': 'w3mpro', 'w4mpro_ep': 'w4mpro',
+                                 'w3sigmpro_ep': 'w3sigmpro','w4sigmpro_ep': 'w4sigmpro'})
+                    AllWISE_datatable = read_df
+                    self.AllWISE_datatable = AllWISE_datatable
+                if filetype == "WISE":
+                    WISE_datatable = read_df
+                if filetype == "WISE3bandCryo":
+                    WISE3bandCryo_datatable = read_df
+                    #self.WISE3bandCryo_datatable = WISE3bandCryo_datatable
+                if filetype == "WISEPostCryo":
+                    WISEPostCryo_datatable = read_df
+            except EmptyDataError:
+                print("No data from " + filetype)
+                available_files.remove(filetype)
+                
 
         # Use multindexing to stick together all the data while retaining its source
         # Can then access with e.g. final_df.loc["NEOWISE"]
         if "NEOWISE" not in available_files :
-            NEOWISE_datatable = pd.df({})
+            NEOWISE_datatable = pd.DataFrame.from_dict({}) 
         if "AllWISE" not in available_files :
-            AllWISE_datatable = pd.df({})
+            AllWISE_datatable = pd.DataFrame.from_dict({}) 
         if "WISE" not in available_files :
-            WISE_datatable = pd.df({}) 
+            WISE_datatable = pd.DataFrame.from_dict({}) 
         if "WISE3bandCryo" not in available_files :
-            WISE3bandCryo_datatable = pd.df({}) 
+            WISE3bandCryo_datatable = pd.DataFrame.from_dict({}) 
         if "WISEPostCryo" not in available_files :
-            WISEPostCryo_datatable = pd.df({})
+            WISEPostCryo_datatable = pd.DataFrame.from_dict({}) 
             
         final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
                               WISE_datatable,WISE3bandCryo_datatable,WISEPostCryo_datatable),
