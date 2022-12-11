@@ -41,6 +41,11 @@ import corner
 from scipy.optimize import curve_fit
 from lmfit import Model
 
+import sys
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("ignore")
+
 # Various helping functions
 # Check they are all documented
 
@@ -695,11 +700,14 @@ class WISE_Data:
             except KeyError:
                 pass
         
-        #Apply non-linearity correction
-        # THIS NEEDS an external file! Careful
-        w1_lincorr = np.loadtxt('/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/W1_saturation_corr.txt',
+        #Apply non-linearity correction        
+        # Get location of this file
+        filepath = os.path.dirname(os.path.abspath(__file__))
+        WISE_nonlin_path = filepath + "/WISE_nonlinearity_correction/"
+        
+        w1_lincorr = np.loadtxt(WISE_nonlin_path + 'W1_saturation_corr.txt',
                                skiprows=5,unpack='yes')
-        w2_lincorr = np.loadtxt('/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/W2_saturation_corr.txt',
+        w2_lincorr = np.loadtxt(WISE_nonlin_path + 'W2_saturation_corr.txt',
                                 skiprows=5,unpack='yes')
         
         w1mags = neowise_df["w1mag"].to_numpy()
@@ -853,21 +861,20 @@ class WISE_Data:
             w2ap_flux_values = [np.array(groups.median()['w2apflux_'+str(i)]) for i in range(1,9)]            
 
         if err_measure == "SEM" :
-            w1mag_err = np.array(groups.sem()["w1mag"])
-            w1flux_err = np.array(groups.sem()["w1flux"])
-            w1apmag_err = np.array(groups.sem()["w1apmag"])
-            w1apflux_err = np.array(groups.sem()["w1apflux"])
-            w1ap_mag_err_values = [np.array(groups.sem()['w1apmag_'+str(i)]) for i in range(1,9)]
-            w1ap_flux_err_values = [np.array(groups.sem()['w1apflux_'+str(i)]) for i in range(1,9)]
+            w1mag_err = np.array(groups.agg(lambda x: SEM(x))["w1mag"])
+            w1flux_err = np.array(groups.agg(lambda x: SEM(x))["w1flux"])
+            w1apmag_err = np.array(groups.agg(lambda x: SEM(x))["w1apmag"])
+            w1apflux_err = np.array(groups.agg(lambda x: SEM(x))["w1apflux"])
+            w1ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apmag"+str(i)]) for i in range(1,9)]
+            w1ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apflux"+str(i)]) for i in range(1,9)]
                                 
-            w2mag_err = np.array(groups.sem()["w2mag"])
-            w2flux_err = np.array(groups.sem()["w2flux"])
-            w2apmag_err = np.array(groups.sem()["w2apmag"])
-            w2apflux_err = np.array(groups.sem()["w2apflux"])
-            w2ap_mag_err_values = [np.array(groups.sem()['w2apmag_'+str(i)]) for i in range(1,9)]
-            w2ap_flux_err_values = [np.array(groups.sem()['w2apflux_'+str(i)]) for i in range(1,9)]
+            w2mag_err = np.array(groups.agg(lambda x: SEM(x))["w2mag"])
+            w2flux_err = np.array(groups.agg(lambda x: SEM(x))["w2flux"])
+            w2apmag_err = np.array(groups.agg(lambda x: SEM(x))["w2apmag"])
+            w2apflux_err = np.array(groups.agg(lambda x: SEM(x))["w2apflux"])
+            w2ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apmag"+str(i)]) for i in range(1,9)]
+            w2ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apflux"+str(i)]) for i in range(1,9)]
 
-        
         
         w1mag_mean_nonlin_unc = scipy.stats.binned_statistic(self.data['mjd'].values,
                                                              self.data['w1_nonlin_unc'].values,\
