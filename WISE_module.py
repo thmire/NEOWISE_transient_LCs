@@ -639,43 +639,62 @@ class WISE_Data:
             
         neowise_df = pd.DataFrame({})
         neowise_df['mjd'] = self.datatable['mjd'][neowise_mask]
-        # Should tidy this eventually, loop   
-        neowise_df['w1mag'] = self.datatable['w1mpro'][neowise_mask]
-        neowise_df['w1sig'] = self.datatable['w1sigmpro'][neowise_mask]
-        neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
-        neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
-        neowise_df['w2mag'] = self.datatable['w2mpro'][neowise_mask]
-        neowise_df['w2sig'] = self.datatable['w2sigmpro'][neowise_mask]
-        neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
-        neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
+        # Should tidy this eventually, loop
+
+        for band in ["w1","w2","w3","w4"] :
+            neowise_df[band + "mag"] = self.datatable[band + 'mpro'][neowise_mask]
+            neowise_df[band + "sig"] = self.datatable[band + 'sigmpro'][neowise_mask]
+            neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], self.f0_wise_3_4)
+            neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] * self.datatable[band + "snr"]
+            neowise_df[band + 'apmag'] = self.datatable[band + 'mag'][neowise_mask]
+            neowise_df[band + 'apsig'] = self.datatable[band + 'sigm'][neowise_mask]
+            neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'], self.f0_wise_3_4)
+            neowise_df[band + 'apfluxsig'] =   neowise_df[band + 'apflux'] * mag_unc_to_flux_unc(neowise_df[band + 'apsig'])
+            for i in range(1,9) :
+                neowise_df[band + 'apmag_'+str(i)] = self.datatable[band + 'mag_'+str(i)][neowise_mask]    
+                neowise_df[band + 'apsig_'+str(i)] = self.datatable[band + 'sigm_'+str(i)][neowise_mask]    
+                neowise_df[band + 'apflux_'+str(i)] = mag_to_fluxdens(neowise_df[band + 'apmag_'+str(i)], self.f0_wise_3_4)
+                neowise_df[band + 'apfluxsig_'+str(i)] =   neowise_df[band + 'apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df[band + 'apsig_'+str(i)])
+
+            
+##        neowise_df['w1mag'] = self.datatable['w1mpro'][neowise_mask]
+##        neowise_df['w1sig'] = self.datatable['w1sigmpro'][neowise_mask]
+##        neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
+##        #neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
+##        neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * self.datatable["w1snr"]
+##
+##        neowise_df['w2mag'] = self.datatable['w2mpro'][neowise_mask]
+##        neowise_df['w2sig'] = self.datatable['w2sigmpro'][neowise_mask]
+##        neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+##        neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
 
 
         # We want to be able to play with apertures, so lets include all the
         # apertures in the datatable so they can be binned.
         # First the formal aperture mags
         # Note that these are CoG corrected - may want to make the corrections look-upable
-        neowise_df['w1apmag'] = self.datatable['w1mag'][neowise_mask]
-        neowise_df['w1apsig'] = self.datatable['w1sigm'][neowise_mask]
-        neowise_df['w1apflux'] = mag_to_fluxdens(neowise_df['w1apmag'], self.f0_wise_3_4)
-        neowise_df['w1apfluxsig'] =   neowise_df['w1apflux'] * mag_unc_to_flux_unc(neowise_df['w1apsig'])
-        
-        neowise_df['w2apmag'] = self.datatable['w2mag'][neowise_mask]
-        neowise_df['w2apsig'] = self.datatable['w2sigm'][neowise_mask]    
-        neowise_df['w2apflux'] = mag_to_fluxdens(neowise_df['w2apmag'], self.f0_wise_4_6)
-        neowise_df['w2apfluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2apsig'])
+##        neowise_df['w1apmag'] = self.datatable['w1mag'][neowise_mask]
+##        neowise_df['w1apsig'] = self.datatable['w1sigm'][neowise_mask]
+##        neowise_df['w1apflux'] = mag_to_fluxdens(neowise_df['w1apmag'], self.f0_wise_3_4)
+##        neowise_df['w1apfluxsig'] =   neowise_df['w1apflux'] * mag_unc_to_flux_unc(neowise_df['w1apsig'])
+##        
+##        neowise_df['w2apmag'] = self.datatable['w2mag'][neowise_mask]
+##        neowise_df['w2apsig'] = self.datatable['w2sigm'][neowise_mask]    
+##        neowise_df['w2apflux'] = mag_to_fluxdens(neowise_df['w2apmag'], self.f0_wise_4_6)
+##        neowise_df['w2apfluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2apsig'])
 
         # Now for all the individual ap_mags, with different ap_sizes:
-        for i in range(1,9) :
-            neowise_df['w1apmag_'+str(i)] = self.datatable['w1mag_'+str(i)][neowise_mask]    
-            neowise_df['w1apsig_'+str(i)] = self.datatable['w1sigm_'+str(i)][neowise_mask]    
-            neowise_df['w1apflux_'+str(i)] = mag_to_fluxdens(neowise_df['w1apmag_'+str(i)], self.f0_wise_3_4)
-            neowise_df['w1apfluxsig_'+str(i)] =   neowise_df['w1apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df['w1apsig_'+str(i)])
-            
-            neowise_df['w2apmag_'+str(i)] = self.datatable['w2mag_'+str(i)][neowise_mask]    
-            neowise_df['w2apsig_'+str(i)] = self.datatable['w2sigm_'+str(i)][neowise_mask]    
-            neowise_df['w2apflux_'+str(i)] = mag_to_fluxdens(neowise_df['w2apmag_'+str(i)], self.f0_wise_4_6)
-            neowise_df['w2apfluxsig_'+str(i)] =   neowise_df['w2apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df['w2apsig_'+str(i)]) 
-
+##        for i in range(1,9) :
+##            neowise_df['w1apmag_'+str(i)] = self.datatable['w1mag_'+str(i)][neowise_mask]    
+##            neowise_df['w1apsig_'+str(i)] = self.datatable['w1sigm_'+str(i)][neowise_mask]    
+##            neowise_df['w1apflux_'+str(i)] = mag_to_fluxdens(neowise_df['w1apmag_'+str(i)], self.f0_wise_3_4)
+##            neowise_df['w1apfluxsig_'+str(i)] =   neowise_df['w1apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df['w1apsig_'+str(i)])
+##            
+##            neowise_df['w2apmag_'+str(i)] = self.datatable['w2mag_'+str(i)][neowise_mask]    
+##            neowise_df['w2apsig_'+str(i)] = self.datatable['w2sigm_'+str(i)][neowise_mask]    
+##            neowise_df['w2apflux_'+str(i)] = mag_to_fluxdens(neowise_df['w2apmag_'+str(i)], self.f0_wise_4_6)
+##            neowise_df['w2apfluxsig_'+str(i)] =   neowise_df['w2apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df['w2apsig_'+str(i)]) 
+##
         
         # Here we also want to extract the data rejected for being too far from the expected coords
         neowise_extras = pd.DataFrame({})
@@ -683,7 +702,7 @@ class WISE_Data:
                 self.datatable['sep'] > self.allowed_sep,\
                 self.datatable['qual_frame'] > 0,\
                 self.datatable['qi_fact'] > 0,\
-                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
+                [('U' not in i) for i in self.datatable['ph_qual']],\
                 [abs(i) > 5 for i in self.datatable['saa_sep']],\
                 self.datatable['moon_masked'] == 0,\
                 [(i == 0.0 or i == '0000') for i in self.datatable['cc_flags']],\
