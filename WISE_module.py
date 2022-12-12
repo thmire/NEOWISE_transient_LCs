@@ -332,7 +332,7 @@ class WISE_Data:
                     for i in line.split('|')[1:-1]:
                         header.append(i.lstrip().rstrip())
                     break
-            print(file_i,skiprows)
+            #print(file_i,skiprows)
             try :
                 read_df = pd.read_fwf(file_i, skiprows = skiprows, header = None, names = header)
                 ra_median = np.median(read_df['ra'])
@@ -372,16 +372,25 @@ class WISE_Data:
         # Use multindexing to stick together all the data while retaining its source
         # Can then access with e.g. final_df.loc["NEOWISE"]
         if "NEOWISE" not in available_files :
-            NEOWISE_datatable = pd.DataFrame.from_dict({}) 
-        if "AllWISE" not in available_files :
-            AllWISE_datatable = pd.DataFrame.from_dict({}) 
+            NEOWISE_datatable = pd.DataFrame.from_dict({})
         if "WISE" not in available_files :
             WISE_datatable = pd.DataFrame.from_dict({}) 
         if "WISE3bandCryo" not in available_files :
             WISE3bandCryo_datatable = pd.DataFrame.from_dict({}) 
         if "WISEPostCryo" not in available_files :
-            WISEPostCryo_datatable = pd.DataFrame.from_dict({}) 
-            
+            WISEPostCryo_datatable = pd.DataFrame.from_dict({})
+        if "AllWISE" not in available_files :
+            AllWISE_datatable = pd.DataFrame.from_dict({})
+            self.AllWISE_datatable = AllWISE_datatable
+        # If AllWISE available, dont include the psf mags from other sources, otherwise will double count
+        else :
+            print("We have AllWISE, so trimming superseded psf measurements")
+            psf_vals_to_drop = ["w1mpro","w1sigmpro","w2mpro","w2sigmpro","w3mpro","w3sigmpro","w4mpro","w4sigmpro"]
+            WISE_datatable.drop(columns=(psf_vals_to_drop),inplace=True)
+            self.test = WISE_datatable
+            WISE3bandCryo_datatable.drop(columns=(psf_vals_to_drop[0:-2]),inplace=True)
+            WISEPostCryo_datatable.drop(columns=(psf_vals_to_drop[0:-4]),inplace=True)
+        
         final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
                               WISE_datatable,WISE3bandCryo_datatable,WISEPostCryo_datatable),
                              keys=["NEOWISE","AllWISE","WISE","WISE3bandCryo","WISEPostCryo"])
@@ -639,22 +648,24 @@ class WISE_Data:
             
         neowise_df = pd.DataFrame({})
         neowise_df['mjd'] = self.datatable['mjd'][neowise_mask]
-        # Should tidy this eventually, loop
-
+        
         for band in ["w1","w2","w3","w4"] :
-            neowise_df[band + "mag"] = self.datatable[band + 'mpro'][neowise_mask]
-            neowise_df[band + "sig"] = self.datatable[band + 'sigmpro'][neowise_mask]
-            neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], self.f0_wise_3_4)
-            neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] * self.datatable[band + "snr"]
-            neowise_df[band + 'apmag'] = self.datatable[band + 'mag'][neowise_mask]
-            neowise_df[band + 'apsig'] = self.datatable[band + 'sigm'][neowise_mask]
-            neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'], self.f0_wise_3_4)
-            neowise_df[band + 'apfluxsig'] =   neowise_df[band + 'apflux'] * mag_unc_to_flux_unc(neowise_df[band + 'apsig'])
-            for i in range(1,9) :
-                neowise_df[band + 'apmag_'+str(i)] = self.datatable[band + 'mag_'+str(i)][neowise_mask]    
-                neowise_df[band + 'apsig_'+str(i)] = self.datatable[band + 'sigm_'+str(i)][neowise_mask]    
-                neowise_df[band + 'apflux_'+str(i)] = mag_to_fluxdens(neowise_df[band + 'apmag_'+str(i)], self.f0_wise_3_4)
-                neowise_df[band + 'apfluxsig_'+str(i)] =   neowise_df[band + 'apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df[band + 'apsig_'+str(i)])
+            try :
+                neowise_df[band + "mag"] = self.datatable[band + 'mpro'][neowise_mask]
+                neowise_df[band + "sig"] = self.datatable[band + 'sigmpro'][neowise_mask]
+                neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], self.f0_wise_3_4)
+                neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] * self.datatable[band + "snr"]
+                neowise_df[band + 'apmag'] = self.datatable[band + 'mag'][neowise_mask]
+                neowise_df[band + 'apsig'] = self.datatable[band + 'sigm'][neowise_mask]
+                neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'], self.f0_wise_3_4)
+                neowise_df[band + 'apfluxsig'] =   neowise_df[band + 'apflux'] * mag_unc_to_flux_unc(neowise_df[band + 'apsig'])
+                for i in range(1,9) :
+                    neowise_df[band + 'apmag_'+str(i)] = self.datatable[band + 'mag_'+str(i)][neowise_mask]    
+                    neowise_df[band + 'apsig_'+str(i)] = self.datatable[band + 'sigm_'+str(i)][neowise_mask]    
+                    neowise_df[band + 'apflux_'+str(i)] = mag_to_fluxdens(neowise_df[band + 'apmag_'+str(i)], self.f0_wise_3_4)
+                    neowise_df[band + 'apfluxsig_'+str(i)] =   neowise_df[band + 'apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df[band + 'apsig_'+str(i)])
+            except KeyError :
+                break
         
         # Here we also want to extract the data rejected for being too far from the expected coords
         neowise_extras = pd.DataFrame({})
@@ -673,19 +684,19 @@ class WISE_Data:
             neowise_extras[i] = self.datatable[i][mask]
         self.companion_data = neowise_extras
         
-        if self.AllWISE_datatable.empty != True :
-            try :
-                if self.AllWISE_datatable.empty == False :
-                    neowise_df['w3mag'] = self.datatable['w3mpro'][neowise_mask]
-                    neowise_df['w3sig'] = self.datatable['w3sigmpro'][neowise_mask]
-                    neowise_df['w3flux'] = mag_to_fluxdens(neowise_df['w3mag'], self.f0_W3)
-                    neowise_df['w3fluxsig'] =   neowise_df['w3flux'] * mag_unc_to_flux_unc(neowise_df['w3sig'])                                
-                    neowise_df['w4mag'] = self.datatable['w4mpro'][neowise_mask]
-                    neowise_df['w4sig'] = self.datatable['w4sigmpro'][neowise_mask]
-                    neowise_df['w4flux'] = mag_to_fluxdens(neowise_df['w4mag'], self.f0_W4)
-                    neowise_df['w4fluxsig'] =   neowise_df['w4flux'] * mag_unc_to_flux_unc(neowise_df['w4sig'])
-            except KeyError:
-                pass
+##        if self.AllWISE_datatable.empty != True :
+##            try :
+##                if self.AllWISE_datatable.empty == False :
+##                    neowise_df['w3mag'] = self.datatable['w3mpro'][neowise_mask]
+##                    neowise_df['w3sig'] = self.datatable['w3sigmpro'][neowise_mask]
+##                    neowise_df['w3flux'] = mag_to_fluxdens(neowise_df['w3mag'], self.f0_W3)
+##                    neowise_df['w3fluxsig'] =   neowise_df['w3flux'] * mag_unc_to_flux_unc(neowise_df['w3sig'])                                
+##                    neowise_df['w4mag'] = self.datatable['w4mpro'][neowise_mask]
+##                    neowise_df['w4sig'] = self.datatable['w4sigmpro'][neowise_mask]
+##                    neowise_df['w4flux'] = mag_to_fluxdens(neowise_df['w4mag'], self.f0_W4)
+##                    neowise_df['w4fluxsig'] =   neowise_df['w4flux'] * mag_unc_to_flux_unc(neowise_df['w4sig'])
+##            except KeyError:
+##                pass
         
         #Apply non-linearity correction        
         # Get location of this file
@@ -766,21 +777,8 @@ class WISE_Data:
         if self.baddata == 'yes':
             print(self.source+': No good data!')
             return
-
-
-        # Before binning, need to remove duplicate measurements that arise
-        # from the AllWISE measurements being a re-processing of the earlier
-        # releases. So remove the psf measurements from the WISE, 3band and
-        # post-cryo parts of the table.
-
-        
-        
-       # trimmed_df 
-        
         
         # Use the binning that is built into pandas dfs
-    
-        
         start_epoch = np.min(self.data['mjd'])
         end_epoch = np.max(self.data['mjd'])
         yr = u.year.to(u.d)    
