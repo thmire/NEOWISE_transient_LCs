@@ -865,15 +865,15 @@ class WISE_Data:
             w1flux_err = np.array(groups.agg(lambda x: SEM(x))["w1flux"])
             w1apmag_err = np.array(groups.agg(lambda x: SEM(x))["w1apmag"])
             w1apflux_err = np.array(groups.agg(lambda x: SEM(x))["w1apflux"])
-            w1ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apmag"+str(i)]) for i in range(1,9)]
-            w1ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apflux"+str(i)]) for i in range(1,9)]
+            w1ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apmag_"+str(i)]) for i in range(1,9)]
+            w1ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apflux_"+str(i)]) for i in range(1,9)]
                                 
             w2mag_err = np.array(groups.agg(lambda x: SEM(x))["w2mag"])
             w2flux_err = np.array(groups.agg(lambda x: SEM(x))["w2flux"])
             w2apmag_err = np.array(groups.agg(lambda x: SEM(x))["w2apmag"])
             w2apflux_err = np.array(groups.agg(lambda x: SEM(x))["w2apflux"])
-            w2ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apmag"+str(i)]) for i in range(1,9)]
-            w2ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apflux"+str(i)]) for i in range(1,9)]
+            w2ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apmag_"+str(i)]) for i in range(1,9)]
+            w2ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apflux_"+str(i)]) for i in range(1,9)]
 
         
         w1mag_mean_nonlin_unc = scipy.stats.binned_statistic(self.data['mjd'].values,
