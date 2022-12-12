@@ -648,21 +648,23 @@ class WISE_Data:
             
         neowise_df = pd.DataFrame({})
         neowise_df['mjd'] = self.datatable['mjd'][neowise_mask]
-        
+
+
+        ZP_dict = {"w1":self.f0_wise_3_4,"w2":self.f0_wise_4_6,"w3":self.f0_W3,"w4":self.f0_W4}
         for band in ["w1","w2","w3","w4"] :
             try :
                 neowise_df[band + "mag"] = self.datatable[band + 'mpro'][neowise_mask]
                 neowise_df[band + "sig"] = self.datatable[band + 'sigmpro'][neowise_mask]
-                neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], self.f0_wise_3_4)
+                neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], ZP_dict[band])
                 neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] * self.datatable[band + "snr"]
                 neowise_df[band + 'apmag'] = self.datatable[band + 'mag'][neowise_mask]
                 neowise_df[band + 'apsig'] = self.datatable[band + 'sigm'][neowise_mask]
-                neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'], self.f0_wise_3_4)
+                neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'],  ZP_dict[band])
                 neowise_df[band + 'apfluxsig'] =   neowise_df[band + 'apflux'] * mag_unc_to_flux_unc(neowise_df[band + 'apsig'])
                 for i in range(1,9) :
                     neowise_df[band + 'apmag_'+str(i)] = self.datatable[band + 'mag_'+str(i)][neowise_mask]    
                     neowise_df[band + 'apsig_'+str(i)] = self.datatable[band + 'sigm_'+str(i)][neowise_mask]    
-                    neowise_df[band + 'apflux_'+str(i)] = mag_to_fluxdens(neowise_df[band + 'apmag_'+str(i)], self.f0_wise_3_4)
+                    neowise_df[band + 'apflux_'+str(i)] = mag_to_fluxdens(neowise_df[band + 'apmag_'+str(i)],  ZP_dict[band])
                     neowise_df[band + 'apfluxsig_'+str(i)] =   neowise_df[band + 'apflux_'+str(i)] * mag_unc_to_flux_unc(neowise_df[band + 'apsig_'+str(i)])
             except KeyError :
                 break
@@ -876,8 +878,8 @@ class WISE_Data:
                 neowise_bin_df[band + "apmag_" + str(i+1)] = unp.uarray(binned_phot_dict[band + "_all_apmags"][i],
                             np.sqrt(binned_phot_dict[band + "_all_apmag_errs"][i]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))              
                 neowise_bin_df[band + "apflux_"+str(i+1)] = unp.uarray(binned_phot_dict[band + "_all_apfluxes"][i],
-                                                  np.sqrt(binned_phot_dict[band + "_all_apfluxes"][i]**2+\
-                                    (binned_phot_dict[band + "_all_apfluxes"][i]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 +\
+                                                  np.sqrt(binned_phot_dict[band + "_all_apflux_errs"][i]**2+\
+                                    (binned_phot_dict[band + "_all_apflux_errs"][i]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 +\
                                                           binned_phot_dict[band + "mag_mean_nonlin_unc"]**2))
 
         self.binned_data = neowise_bin_df   
