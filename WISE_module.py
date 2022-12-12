@@ -684,20 +684,6 @@ class WISE_Data:
             neowise_extras[i] = self.datatable[i][mask]
         self.companion_data = neowise_extras
         
-##        if self.AllWISE_datatable.empty != True :
-##            try :
-##                if self.AllWISE_datatable.empty == False :
-##                    neowise_df['w3mag'] = self.datatable['w3mpro'][neowise_mask]
-##                    neowise_df['w3sig'] = self.datatable['w3sigmpro'][neowise_mask]
-##                    neowise_df['w3flux'] = mag_to_fluxdens(neowise_df['w3mag'], self.f0_W3)
-##                    neowise_df['w3fluxsig'] =   neowise_df['w3flux'] * mag_unc_to_flux_unc(neowise_df['w3sig'])                                
-##                    neowise_df['w4mag'] = self.datatable['w4mpro'][neowise_mask]
-##                    neowise_df['w4sig'] = self.datatable['w4sigmpro'][neowise_mask]
-##                    neowise_df['w4flux'] = mag_to_fluxdens(neowise_df['w4mag'], self.f0_W4)
-##                    neowise_df['w4fluxsig'] =   neowise_df['w4flux'] * mag_unc_to_flux_unc(neowise_df['w4sig'])
-##            except KeyError:
-##                pass
-        
         #Apply non-linearity correction        
         # Get location of this file
         filepath = os.path.dirname(os.path.abspath(__file__))
@@ -742,6 +728,9 @@ class WISE_Data:
                 w2mags[np.where(w2mags == mag)] = mag_corr[0]
         
         neowise_df["w1_nonlin_unc"] = nonlin_unc_w1; neowise_df["w2_nonlin_unc"] = nonlin_unc_w2
+
+        # Placeholder for W3 and W4, should look into this:
+        neowise_df["w3_nonlin_unc"] = 0; neowise_df["w4_nonlin_unc"] = 0
         
         neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
         #neowise_df['w1fluxsig'] =   neowise_df['w1flux'] / self.datatable['w1snr'][neowise_mask]
@@ -761,7 +750,7 @@ class WISE_Data:
         else :
             self.baddata ='no'
             
-    def bin_data(self,plot='yes',mag_measure = 'mean',err_measure='SEM'):
+    def bin_data(self,plot='yes',mag_measure = 'median',err_measure='SEM'):
         """
         Bins data from sets of observations. Will plot as default
         
@@ -824,145 +813,115 @@ class WISE_Data:
         groups = self.data.groupby(pd.cut(self.data.mjd, bins))
         neowise_bin_df['mjd'] = np.array(groups.mean()["mjd"])
 
-        #NB: The older code had more options, but here we have less
-        # This should be rewritten to not be so long.
-        if mag_measure == "mean" :
-            w1mag_values = np.array(groups.mean()["w1mag"])
-            w1flux_values = np.array(groups.mean()["w1flux"])
-            w1apmag_values = np.array(groups.mean()["w1apmag"])
-            w1apflux_values = np.array(groups.mean()["w1apflux"])
-            w1ap_mag_values = [np.array(groups.mean()['w1apmag_'+str(i)]) for i in range(1,9)]
-            w1ap_flux_values = [np.array(groups.mean()['w1apflux_'+str(i)]) for i in range(1,9)]
-                               
-            w2mag_values = np.array(groups.mean()["w2mag"])
-            w2flux_values = np.array(groups.mean()["w2flux"])
-            w2apmag_values = np.array(groups.mean()["w2apmag"])
-            w2apflux_values = np.array(groups.mean()["w2apflux"])
-            w2ap_mag_values = [np.array(groups.mean()['w2apmag_'+str(i)]) for i in range(1,9)]
-            w2ap_flux_values = [np.array(groups.mean()['w1apflux_'+str(i)]) for i in range(1,9)]
-            
-        elif mag_measure == "median" :
-            w1mag_values = np.array(groups.median()["w1mag"])
-            w1flux_values = np.array(groups.median()["w1flux"])
-            w1apmag_values = np.array(groups.median()["w1apmag"])
-            w1apflux_values = np.array(groups.median()["w1apflux"])
-            w1ap_mag_values = [np.array(groups.median()['w1apmag_'+str(i)]) for i in range(1,9)]
-            w1ap_flux_values = [np.array(groups.median()['w1apflux_'+str(i)]) for i in range(1,9)]
-                               
-            w2mag_values = np.array(groups.median()["w2mag"])
-            w2flux_values = np.array(groups.median()["w2flux"])
-            w2apmag_values = np.array(groups.median()["w2apmag"])
-            w2apflux_values = np.array(groups.median()["w2apflux"])
-            w2ap_mag_values = [np.array(groups.median()['w2apmag_'+str(i)]) for i in range(1,9)]
-            w2ap_flux_values = [np.array(groups.median()['w2apflux_'+str(i)]) for i in range(1,9)]            
-
-        if err_measure == "SEM" :
-            w1mag_err = np.array(groups.agg(lambda x: SEM(x))["w1mag"])
-            w1flux_err = np.array(groups.agg(lambda x: SEM(x))["w1flux"])
-            w1apmag_err = np.array(groups.agg(lambda x: SEM(x))["w1apmag"])
-            w1apflux_err = np.array(groups.agg(lambda x: SEM(x))["w1apflux"])
-            w1ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apmag_"+str(i)]) for i in range(1,9)]
-            w1ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w1apflux_"+str(i)]) for i in range(1,9)]
-                                
-            w2mag_err = np.array(groups.agg(lambda x: SEM(x))["w2mag"])
-            w2flux_err = np.array(groups.agg(lambda x: SEM(x))["w2flux"])
-            w2apmag_err = np.array(groups.agg(lambda x: SEM(x))["w2apmag"])
-            w2apflux_err = np.array(groups.agg(lambda x: SEM(x))["w2apflux"])
-            w2ap_mag_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apmag_"+str(i)]) for i in range(1,9)]
-            w2ap_flux_err_values = [np.array(groups.agg(lambda x: SEM(x))["w2apflux_"+str(i)]) for i in range(1,9)]
-
+        #NB: The older code had more options, but here we have less, so re-add?
         
-        w1mag_mean_nonlin_unc = scipy.stats.binned_statistic(self.data['mjd'].values,
-                                                             self.data['w1_nonlin_unc'].values,\
-                                                             statistic=np.mean, bins=bins, range=None)[0] 
-        w2mag_mean_nonlin_unc = scipy.stats.binned_statistic(self.data['mjd'].values,
-                                                                       self.data['w2_nonlin_unc'].values,\
-                                                       statistic=np.mean, bins=bins, range=None)[0] 
-        w1flux_mean_non_lin_unc = (10**(0.4*w1mag_mean_nonlin_unc) - 1) * w1flux_values
-        w2flux_mean_non_lin_unc = (10**(0.4*w2mag_mean_nonlin_unc) - 1) * w2flux_values      
-        
-        # new version from the NEOWISE website
-        # Take the 0.0026 and 0.0061 RMS in the ZP from NEOWISE website
-        
-        neowise_bin_df['w1mag'] = unp.uarray(w1mag_values,
-                            np.sqrt(w1mag_err**2 + w1mag_mean_nonlin_unc**2+ (0.0026)**2))
-        neowise_bin_df['w2mag'] = unp.uarray(w2mag_values,
-                                np.sqrt(w2mag_err**2+ (0.0061)**2 + w2mag_mean_nonlin_unc**2))
-        neowise_bin_df['w1flux'] = unp.uarray(w1flux_values,
-            np.sqrt(w1flux_err**2+(w1flux_values*mag_unc_to_flux_unc(0.0026))**2 + w1flux_mean_non_lin_unc**2))
-        neowise_bin_df['w2flux'] = unp.uarray(w2flux_values,
-                 np.sqrt(w2flux_err**2+(w2flux_values*mag_unc_to_flux_unc(0.0061))**2+ w2flux_mean_non_lin_unc**2))
-
-        # Now add all the aperture mags and fluxes
-        
-        neowise_bin_df['w1apmag'] = unp.uarray(w1apmag_values,
-                            np.sqrt(w1apmag_err**2 + w1mag_mean_nonlin_unc**2+ (0.0026)**2))
-        neowise_bin_df['w2apmag'] = unp.uarray(w2apmag_values,
-                            np.sqrt(w2apmag_err**2 + w2mag_mean_nonlin_unc**2+ (0.0061)**2))
-        neowise_bin_df['w1apflux'] = unp.uarray(w1apflux_values,
-                            np.sqrt(w1apflux_err**2 + w1mag_mean_nonlin_unc**2+\
-                                    (w1apflux_values*mag_unc_to_flux_unc(0.0026))**2))
-        neowise_bin_df['w2apflux'] = unp.uarray(w2apflux_values,
-                            np.sqrt(w2apflux_err**2 + w2mag_mean_nonlin_unc**2+\
-                                    (w1apflux_values*mag_unc_to_flux_unc(0.0061))**2))
-
-        for i in range(0,8):
-            neowise_bin_df["w1apmag_"+str(i+1)] = unp.uarray(w1ap_mag_values[i],
-                            np.sqrt(w1ap_mag_err_values[i]**2 + w1mag_mean_nonlin_unc**2+ (0.0026)**2))
-            neowise_bin_df["w2apmag_"+str(i+1)] = unp.uarray(w2ap_mag_values[i],
-                            np.sqrt(w2ap_mag_err_values[i]**2 + w2mag_mean_nonlin_unc**2+ (0.0061)**2))
-            
-            neowise_bin_df["w1apflux_"+str(i+1)] = unp.uarray(w1ap_flux_values[i],
-                                                  np.sqrt(w1ap_flux_err_values[i]**2+\
-                                    (w1ap_flux_values[i]*mag_unc_to_flux_unc(0.0026))**2 +\
-                                                          w1flux_mean_non_lin_unc**2))
-            
-            neowise_bin_df["w2apflux_"+str(i+1)] = unp.uarray(w2ap_flux_values[i],
-                                                  np.sqrt(w2ap_flux_err_values[i]**2+\
-                                    (w2ap_flux_values[i]*mag_unc_to_flux_unc(0.0061))**2 +\
-                                                          w2flux_mean_non_lin_unc**2))
-
-        
-        if self.AllWISE_datatable.empty != True :
-            print("Trying W3")
-            try :
+        binned_phot_dict = {}
+        # Take the 0.0026 and 0.0061 RMS in the ZP from NEOWISE website:
+        # https://wise2.ipac.caltech.edu/docs/release/neowise/expsup/sec4_2d.html#monitor_zero
+        # Check source for W3 and W4 - look big!
+        ZP_RMS_dict = {"w1":0.0026,"w2":0.0061,"w3":0.045,"w4":0.057}
+        for band in ["w1","w2","w3","w4"] :
+            # Getting the binned values
+            if mag_measure == "mean" :
+                try :
+                    binned_phot_dict[band + "_mags"] = np.array(groups.mean()[band + "mag"])
+                    binned_phot_dict[band + "_fluxes"] = np.array(groups.mean()[band + "flux"])
+                    binned_phot_dict[band + "_apmags"] = np.array(groups.mean()[band + "apmag"])
+                    binned_phot_dict[band + "_apfluxes"] = np.array(groups.mean()[band + "apflux"])
+                    binned_phot_dict[band + "_all_apmags"] = [np.array(groups.mean()[band + 'apmag_'+str(i)]) for i in range(1,9)]
+                    binned_phot_dict[band + "_all_apfluxes"] = [np.array(groups.mean()[band + 'apflux_'+str(i)]) for i in range(1,9)]
+                except KeyError :
+                    continue
+            elif mag_measure == "median" :
+                try :
+                    binned_phot_dict[band + "_mags"] = np.array(groups.median()[band + "mag"])
+                    binned_phot_dict[band + "_fluxes"] = np.array(groups.median()[band + "flux"])
+                    binned_phot_dict[band + "_apmags"] = np.array(groups.median()[band + "apmag"])
+                    binned_phot_dict[band + "_apfluxes"] = np.array(groups.median()[band + "apflux"])
+                    binned_phot_dict[band + "_all_apmags"] = [np.array(groups.median()[band + 'apmag_'+str(i)]) for i in range(1,9)]
+                    binned_phot_dict[band + "_all_apfluxes"] = [np.array(groups.median()[band + 'apflux_'+str(i)]) for i in range(1,9)]
+                except KeyError :
+                    continue
                 
-                w3mag_values = np.array(groups.median()["w3mag"])
-                w3mag_err = np.array(groups.sem()["w3mag"])
-                w3flux_values = np.array(groups.median()["w3flux"])
-                w3flux_err = np.array(groups.sem()["w3flux"])
-                
-                w4mag_values = np.array(groups.median()["w4mag"])
-                w4mag_err = np.array(groups.sem()["w4mag"])
-                w4flux_values = np.array(groups.median()["w4flux"])
-                w4flux_err = np.array(groups.sem()["w4flux"])
- 
-                neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
-                                        np.sqrt(w3mag_err**2 + (flux_unc_to_mag_unc(0.045))**2))
-                neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
-                                        np.sqrt(w3flux_err**2 + (w3flux_values*0.045)**2))
+            # Calculating uncertainties in the bins
+            if err_measure == "SEM" :
+                try :
+                    binned_phot_dict[band + "_mag_errs"] = np.array(groups.agg(lambda x: SEM(x))[band + "mag"])
+                    binned_phot_dict[band + "_flux_errs"] = np.array(groups.agg(lambda x: SEM(x))[band + "flux"])
+                    binned_phot_dict[band + "_apmag_errs"] = np.array(groups.agg(lambda x: SEM(x))[band + "apmag"])
+                    binned_phot_dict[band + "_apflux_errs"] = np.array(groups.agg(lambda x: SEM(x))[band + "apflux"])
+                    binned_phot_dict[band + "_all_apmag_errs"] = [np.array(groups.agg(lambda x: SEM(x))[band + "apmag_"+str(i)]) for i in range(1,9)]
+                    binned_phot_dict[band + "_all_apflux_errs"] = [np.array(groups.agg(lambda x: SEM(x))[band + "apflux_"+str(i)]) for i in range(1,9)]
+                except KeyError :
+                    continue
 
-                neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
-                                        np.sqrt(w4mag_err**2 + (flux_unc_to_mag_unc(0.057))**2))
-                neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
-                                        np.sqrt(w4flux_err**2 + (w4flux_values*0.057)**2))
-                
-##                    neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
-##                                        np.sqrt(w3mag_err**2 + (flux_unc_to_mag_unc(0.045))**2))
-##                    neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
-##                                            np.sqrt(w4mag_err**2+ (flux_unc_to_mag_unc(0.057))**2))
-##                    neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
-##                        np.sqrt(w3flux_err**2+(w3flux_values*0.045)**2))
-##                    neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
-##                             np.sqrt(w4flux_err**2+(w4flux_values*0.057)**2))
-            except KeyError :
-                pass
-            
-        
+            # non-linearity correction
+            binned_phot_dict[band + "mag_mean_nonlin_unc"] = scipy.stats.binned_statistic(self.data['mjd'].values,
+                                                                                         self.data[band+'_nonlin_unc'].values,\
+                                                                                          statistic=np.mean, bins=bins, range=None)[0]
+            binned_phot_dict[band + "flux_mean_nonlin_unc"] = (10**(0.4*binned_phot_dict[band + "mag_mean_nonlin_unc"]) - 1) * binned_phot_dict[band + "_fluxes"]
+
+            # Final values
+            # PSF
+            neowise_bin_df[band + 'mag'] = unp.uarray(binned_phot_dict[band + "_mags"],
+                            np.sqrt(binned_phot_dict[band + "_mag_errs"]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))
+            neowise_bin_df[band + 'flux'] = unp.uarray(binned_phot_dict[band + "_fluxes"],
+                    np.sqrt(binned_phot_dict[band + "_flux_errs"]**2+(binned_phot_dict[band + "_fluxes"]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2))
+            # Aperture
+            neowise_bin_df[band + 'apmag'] = unp.uarray(binned_phot_dict[band + "_apmags"],
+                                                        np.sqrt(binned_phot_dict[band + "_apmag_errs"]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))
+            neowise_bin_df[band + 'apflux'] = unp.uarray(binned_phot_dict[band + "_apfluxes"],
+                                                         np.sqrt(binned_phot_dict[band + "_apflux_errs"]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+(binned_phot_dict[band + "_apfluxes"]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2))
+            for i in range(0,8):
+                neowise_bin_df[band + "apmag_" + str(i+1)] = unp.uarray(binned_phot_dict[band + "_all_apmags"][i],
+                            np.sqrt(binned_phot_dict[band + "_all_apmag_errs"][i]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))              
+                neowise_bin_df[band + "apflux_"+str(i+1)] = unp.uarray(binned_phot_dict[band + "_all_apfluxes"][i],
+                                                  np.sqrt(binned_phot_dict[band + "_all_apfluxes"][i]**2+\
+                                    (binned_phot_dict[band + "_all_apfluxes"][i]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 +\
+                                                          binned_phot_dict[band + "mag_mean_nonlin_unc"]**2))
+
         self.binned_data = neowise_bin_df   
 
-
         # Load of old code here, should be checked and cut
+
+        
+##        if self.AllWISE_datatable.empty != True :
+##            print("Trying W3")
+##            try :
+##                
+##                w3mag_values = np.array(groups.median()["w3mag"])
+##                w3mag_err = np.array(groups.sem()["w3mag"])
+##                w3flux_values = np.array(groups.median()["w3flux"])
+##                w3flux_err = np.array(groups.sem()["w3flux"])
+##                
+##                w4mag_values = np.array(groups.median()["w4mag"])
+##                w4mag_err = np.array(groups.sem()["w4mag"])
+##                w4flux_values = np.array(groups.median()["w4flux"])
+##                w4flux_err = np.array(groups.sem()["w4flux"])
+## 
+##                neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
+##                                        np.sqrt(w3mag_err**2 + (flux_unc_to_mag_unc(0.045))**2))
+##                neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
+##                                        np.sqrt(w3flux_err**2 + (w3flux_values*0.045)**2))
+##
+##                neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
+##                                        np.sqrt(w4mag_err**2 + (flux_unc_to_mag_unc(0.057))**2))
+##                neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
+##                                        np.sqrt(w4flux_err**2 + (w4flux_values*0.057)**2))
+##                
+####                    neowise_bin_df['w3mag'] = unp.uarray(w3mag_values,
+####                                        np.sqrt(w3mag_err**2 + (flux_unc_to_mag_unc(0.045))**2))
+####                    neowise_bin_df['w4mag'] = unp.uarray(w4mag_values,
+####                                            np.sqrt(w4mag_err**2+ (flux_unc_to_mag_unc(0.057))**2))
+####                    neowise_bin_df['w3flux'] = unp.uarray(w3flux_values,
+####                        np.sqrt(w3flux_err**2+(w3flux_values*0.045)**2))
+####                    neowise_bin_df['w4flux'] = unp.uarray(w4flux_values,
+####                             np.sqrt(w4flux_err**2+(w4flux_values*0.057)**2))
+##            except KeyError :
+##                pass
+            
+
+        
         # This is for testing the errors
         #w2mag_err_2 = scipy.stats.binned_statistic(self.data['mjd'].values,self.data['w2mag'].values,\
         #                                           statistic=err_stat, bins=bins, range=None)[0]
@@ -1026,25 +985,6 @@ class WISE_Data:
 #         neowise_bin_df['w2flux'] = unp.uarray(w2flux_values,
 #                                     np.sqrt(w2flux_SEM**2+(w2flux_values*0.027)**2+ w2flux_mean_non_lin_unc**2 )
 
-# I don't think I use this function?
-##        def weighted_bins(data,filt):
-##            """filt: w1mag,w2mag,w1flux,w2flux"""
-##            filts = {'w1mag':'w1sig',"w2mag":"w2sig","w1flux":"w1fluxsig","w2flux":"w2fluxsig"}
-##            dates,bin_edges,binnumber = scipy.stats.binned_statistic(data['mjd'].values,data['mjd'].values,\
-##                        statistic=np.mean, bins=bins, range=None)
-##            weighted_mags = []; weighted_errs = []
-##            for n in range(1,np.max(binnumber)+1):  # Iterate over each bin
-##                pairs = zip(data[filt].values,data[filts[filt]].values,binnumber)
-##                in_bin = [(x,y) for x,y, nbin in pairs if nbin == n]
-##                if in_bin == []:
-##                    #print("no_data")
-##                    weighted_mags.append(np.nan)
-##                    weighted_errs.append(np.nan)
-##                    continue
-##                weighted_mags.append(weighted_mean(in_bin)[0])
-##                weighted_errs.append(weighted_mean(in_bin)[1])
-##                #print(weighted_mags)
-##            return np.array(weighted_mags), np.array(weighted_errs) 
 
         
     
