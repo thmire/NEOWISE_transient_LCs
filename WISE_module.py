@@ -252,10 +252,15 @@ class WISE_Data:
     ----------
     source : str
         Name of source
+        
     datatable : pandas table
-        The original input data from .tbl file, in a pandas table
+        The original input data from .tbl files, in a pandas table
+        multiindexed, so that the NEOWISE, AllWISE, WISE, 3band and PostCryo tables
+        are all preserved.
+        
     data : pandas table
         Output from filter_data method, data will be filtered and some new columns are added
+        
     binned_data : pandas table
         Output from bin_data method, binned data, required for plotting and output (for now)
     allowed_sep : float
@@ -268,6 +273,8 @@ class WISE_Data:
         zp values for these bands, determined from pyphot
     baddata : str
         A flag that switchs on if filtering removes all data
+
+        
                 
     """
     def __init__(self, download=None, file=None, file_2 = None,all_files_path=None,
@@ -378,7 +385,7 @@ class WISE_Data:
         final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
                               WISE_datatable,WISE3bandCryo_datatable,WISEPostCryo_datatable),
                              keys=["NEOWISE","AllWISE","WISE","WISE3bandCryo","WISEPostCryo"])
-    
+        
         self.datatable = final_df
         self.allowed_sep = allowed_sep
         self.filtered = 'no'
@@ -592,8 +599,8 @@ class WISE_Data:
         """
         Removes data based on a number of criteria. Currently only has strictest setting or the 
         "soft" setting which allows objects with bad cc_flags
-        Also checks for saturation and applies non-linearity correction
-        Also, sets up all the aperture mags to be binned
+        Checks for saturation and applies non-linearity correction
+        Sets up all the aperture mags for binning
         """
         
         # If we want to use the aperture_mags
@@ -604,27 +611,28 @@ class WISE_Data:
                 self.datatable['sep'] < self.allowed_sep,\
                 self.datatable['qual_frame'] > 0,\
                 self.datatable['qi_fact'] > 0,\
-                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
+                [('U' not in i) for i in self.datatable['ph_qual']],\
                 [abs(i) > 5 for i in self.datatable['saa_sep']],\
                 self.datatable['moon_masked'] == 0,\
 #                ~np.isnan(self.datatable['w1mag']),\
 #                ~np.isnan(self.datatable['w2mag']),\
-                ~np.isnan(self.datatable['w1mpro']),\
-                ~np.isnan(self.datatable['w2mpro']))]
+##                ~np.isnan(self.datatable['w1mpro']),\
+##                ~np.isnan(self.datatable['w2mpro']),
+                )]
 
         else :
             neowise_mask = [all(constraint) for constraint in zip(
                 self.datatable['sep'] < self.allowed_sep,\
                 self.datatable['qual_frame'] > 0,\
                 self.datatable['qi_fact'] > 0,\
-                [('X' not in i and 'U' not in i) for i in self.datatable['ph_qual']],\
+                [('U' not in i) for i in self.datatable['ph_qual']],\
                 [abs(i) > 5 for i in self.datatable['saa_sep']],\
                 self.datatable['moon_masked'] == 0,\
                 [(i == 0.0 or i == '0000') for i in self.datatable['cc_flags']],\
 #                ~np.isnan(self.datatable['w1mag']),\
 #                ~np.isnan(self.datatable['w2mag']),\
-                ~np.isnan(self.datatable['w1mpro']),\
-                ~np.isnan(self.datatable['w2mpro'])
+##                ~np.isnan(self.datatable['w1mpro']),\
+##                ~np.isnan(self.datatable['w2mpro'])
 #                 self.datatable['w1flg'] == 0.0, 
 #                 self.datatable['w2flg'] == 0.0
             )]      
@@ -780,8 +788,19 @@ class WISE_Data:
             print(self.source+': No good data!')
             return
 
-        # Use the binning that is built into pandas dfs
 
+        # Before binning, need to remove duplicate measurements that arise
+        # from the AllWISE measurements being a re-processing of the earlier
+        # releases. So remove the psf measurements from the WISE, 3band and
+        # post-cryo parts of the table.
+
+        
+        
+       # trimmed_df 
+        
+        
+        # Use the binning that is built into pandas dfs
+    
         
         start_epoch = np.min(self.data['mjd'])
         end_epoch = np.max(self.data['mjd'])
