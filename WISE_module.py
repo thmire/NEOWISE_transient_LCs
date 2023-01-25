@@ -659,7 +659,7 @@ class WISE_Data:
                 neowise_df[band + "mag"] = self.datatable[band + 'mpro'][neowise_mask]
                 neowise_df[band + "sig"] = self.datatable[band + 'sigmpro'][neowise_mask]
                 neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], ZP_dict[band])
-                neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] * self.datatable[band + "snr"]
+                neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] / self.datatable[band + "snr"]
                 neowise_df[band + 'apmag'] = self.datatable[band + 'mag'][neowise_mask]
                 neowise_df[band + 'apsig'] = self.datatable[band + 'sigm'][neowise_mask]
                 neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'],  ZP_dict[band])
@@ -733,19 +733,22 @@ class WISE_Data:
                 w2mags[np.where(w2mags == mag)] = mag_corr[0]
         
         neowise_df["w1_nonlin_unc"] = nonlin_unc_w1; neowise_df["w2_nonlin_unc"] = nonlin_unc_w2
-
+        
+	# Note that we don't correct the flux errs here
+	# we correct the uncertainties on the binned values
+	
         # Placeholder for W3 and W4, should look into this:
         neowise_df["w3_nonlin_unc"] = 0; neowise_df["w4_nonlin_unc"] = 0
         
-        neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
+        #neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
         #neowise_df['w1fluxsig'] =   neowise_df['w1flux'] / self.datatable['w1snr'][neowise_mask]
-        neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
+        #neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
         
         # I did a test where I propogated the mag errs through instead of this
         # result was very similar, errors were a tiny bit less. So I will stick with this.
-        neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+        #neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
         #neowise_df['w2fluxsig'] =   neowise_df['w2flux'] / self.datatable['w2snr'][neowise_mask]
-        neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
+        #neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
 
         self.data = neowise_df
         self.filtered = 'yes'
@@ -870,20 +873,21 @@ class WISE_Data:
             # PSF
             neowise_bin_df[band + 'mag'] = unp.uarray(binned_phot_dict[band + "_mags"],
                             np.sqrt(binned_phot_dict[band + "_mag_errs"]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))
+                           
             neowise_bin_df[band + 'flux'] = unp.uarray(binned_phot_dict[band + "_fluxes"],
-                    np.sqrt(binned_phot_dict[band + "_flux_errs"]**2+(binned_phot_dict[band + "_fluxes"]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2))
+                    np.sqrt(binned_phot_dict[band + "_flux_errs"]**2+(binned_phot_dict[band + "_fluxes"]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 + binned_phot_dict[band + "flux_mean_nonlin_unc"]**2))
             # Aperture
             neowise_bin_df[band + 'apmag'] = unp.uarray(binned_phot_dict[band + "_apmags"],
                                                         np.sqrt(binned_phot_dict[band + "_apmag_errs"]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))
             neowise_bin_df[band + 'apflux'] = unp.uarray(binned_phot_dict[band + "_apfluxes"],
-                                                         np.sqrt(binned_phot_dict[band + "_apflux_errs"]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+(binned_phot_dict[band + "_apfluxes"]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2))
+                                                         np.sqrt(binned_phot_dict[band + "_apflux_errs"]**2 + binned_phot_dict[band + "flux_mean_nonlin_unc"]**2+(binned_phot_dict[band + "_apfluxes"]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2))
             for i in range(0,8):
                 neowise_bin_df[band + "apmag_" + str(i+1)] = unp.uarray(binned_phot_dict[band + "_all_apmags"][i],
                             np.sqrt(binned_phot_dict[band + "_all_apmag_errs"][i]**2 + binned_phot_dict[band + "mag_mean_nonlin_unc"]**2+ (ZP_RMS_dict[band])**2))              
                 neowise_bin_df[band + "apflux_"+str(i+1)] = unp.uarray(binned_phot_dict[band + "_all_apfluxes"][i],
                                                   np.sqrt(binned_phot_dict[band + "_all_apflux_errs"][i]**2+\
                                     (binned_phot_dict[band + "_all_apflux_errs"][i]*mag_unc_to_flux_unc(ZP_RMS_dict[band]))**2 +\
-                                                          binned_phot_dict[band + "mag_mean_nonlin_unc"]**2))
+                                                          binned_phot_dict[band + "flux_mean_nonlin_unc"]**2))
 
         self.binned_data = neowise_bin_df   
 
