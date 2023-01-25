@@ -388,9 +388,12 @@ class WISE_Data:
             psf_vals_to_drop = ["w1mpro","w1sigmpro","w2mpro","w2sigmpro","w3mpro","w3sigmpro","w4mpro","w4sigmpro"]
             WISE_datatable.drop(columns=(psf_vals_to_drop),inplace=True)
             self.test = WISE_datatable
-            WISE3bandCryo_datatable.drop(columns=(psf_vals_to_drop[0:-2]),inplace=True)
+            try :
+                WISE3bandCryo_datatable.drop(columns=(psf_vals_to_drop[0:-2]),inplace=True)
+            except :
+                print("no WISE3band data")
             WISEPostCryo_datatable.drop(columns=(psf_vals_to_drop[0:-4]),inplace=True)
-        
+
         final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
                               WISE_datatable,WISE3bandCryo_datatable,WISEPostCryo_datatable),
                              keys=["NEOWISE","AllWISE","WISE","WISE3bandCryo","WISEPostCryo"])
@@ -1033,8 +1036,8 @@ class WISE_Data:
                         label=label_2, color='red', linestyle = '',
                          marker = 'o', markersize=5, capsize = 3, elinewidth = 1, zorder=1)
             
-            ax1.set_ylim(ymin = min(self.data['w1flux'])*0.95,ymax = max(self.data['w1flux'])*1.05)
-            ax2.set_ylim(ymin = min(self.data['w2flux'])*0.95, ymax = max(self.data['w2flux'])*1.05)
+            ax1.set_ylim(ymin = np.nanmin(self.data['w1flux'])*0.95,ymax = np.nanmax(self.data['w1flux'])*1.05)
+            ax2.set_ylim(ymin = np.nanmin(self.data['w2flux'])*0.95, ymax = np.nanmax(self.data['w2flux'])*1.05)
             ax1.set_ylabel(r'flux (Jy)')
 
             
