@@ -2042,6 +2042,97 @@ def mag_minmax(data):
     
     ((w1_mag_max,w1_mag_min),(w2_mag_max,w2_mag_min))
        
+       
+def comparison_plot(gals,window=None,save='yes', log='no',clean='no',savename=None,xlims=None,title='no'):
+    """
+    Input is list of WISE_data class objects
+    """
+    fig, ax = plt.subplots(1,2)
+    
+    for axis in ax :
+        axis.set_prop_cycle(cycler('color', ['xkcd:blue', 'xkcd:red', 'xkcd:green', 'xkcd:dark yellow',
+                                    'xkcd:violet','xkcd:orange','xkcd:dark green','xkcd:light blue',
+                                    'xkcd:indigo','xkcd:dark grey','xkcd:lime green','xkcd:burnt orange']))
+    w1_maxes=[];w2_maxes=[];w1_mins=[];w2_mins=[]
+    for galaxy in gals :
+        
+        mjd_sub = galaxy.data['mjd_sub']; mjd_binned_sub = galaxy.binned_data['mjd_binned_sub']
+        w1Lum_sub = galaxy.data['w1Lum_sub']; w1Lum_binned_sub = galaxy.binned_data['w1Lum_binned_sub']
+        w1Lum_sub_err = galaxy.data['w1Lum_sub_err']; w1Lum_binned_sub_err = galaxy.binned_data['w1Lum_binned_sub_err']
+        w2Lum_sub = galaxy.data['w2Lum_sub']; w2Lum_binned_sub = galaxy.binned_data['w2Lum_binned_sub']
+        w2Lum_sub_err = galaxy.data['w2Lum_sub_err']; w2Lum_binned_sub_err = galaxy.binned_data['w2Lum_binned_sub_err']
+        
+        if log == 'yes':
+            w1Lum_sub = np.log10(galaxy.data['w1Lum_sub']); w1Lum_binned_sub = np.log10(galaxy.binned_data['w1Lum_binned_sub'])
+            w1Lum_sub_err = galaxy.data['w1Lum_sub_err']/(np.log(10)*galaxy.data['w1Lum_sub'])
+            w1Lum_binned_sub_err = np.log10(galaxy.binned_data['w1Lum_binned_sub_err'])/(np.log(10)*galaxy.binned_data['w1Lum_binned_sub'])
+            w2Lum_sub = np.log10(galaxy.data['w2Lum_sub']); w2Lum_binned_sub = np.log10(galaxy.binned_data['w2Lum_binned_sub'])
+            w2Lum_sub_err = np.log10(galaxy.data['w2Lum_sub_err'])/(np.log(10)*galaxy.data['w2Lum_sub'])
+            w2Lum_binned_sub_err = np.log10(galaxy.binned_data['w2Lum_binned_sub_err'])/(np.log(10)*galaxy.binned_data['w2Lum_binned_sub'])
+                    
+        if clean == 'no':
+            ax[0].errorbar(mjd_sub, w1Lum_sub, yerr=w1Lum_sub_err,
+                       color='black', linestyle = '', 
+                     marker = 'o', markersize=2, alpha = .1, zorder = 0) 
+            ax[1].errorbar(mjd_sub, w2Lum_sub, yerr=w2Lum_sub_err,
+                     color='black', linestyle = '', 
+                     marker = 'o', markersize=2, alpha = .1, zorder = 0) 
+        
+        ax[0].errorbar(mjd_binned_sub, w1Lum_binned_sub,
+                     yerr = w1Lum_binned_sub_err,
+                    label=galaxy.source,
+                     #color='blue',
+                       linestyle = '-',
+                     marker = 'o', markersize=5, capsize = 3, elinewidth = 1, zorder=1,lw=2)
+        ax[1].errorbar(mjd_binned_sub, w2Lum_binned_sub,
+                     yerr = w2Lum_binned_sub_err,
+                    label=galaxy.source,
+                     #color='blue',
+                       linestyle = '-',
+                     marker = 'o', markersize=5, capsize = 3, elinewidth = 1, zorder=1)
+        
+        w1_maxes.append(np.max(w1Lum_binned_sub));w1_mins.append(np.min(w1Lum_binned_sub))
+        w2_maxes.append(np.max(w2Lum_binned_sub));w2_mins.append(np.min(w2Lum_binned_sub))
+
+
+    if window == 'tight':
+        ax[0].axes.set_ylim(ymax=1.2*np.max(w1_maxes),ymin=-0.1*np.max(w1_maxes))
+        ax[1].axes.set_ylim(ymax=1.2*np.max(w1_maxes),ymin=-0.1*np.max(w2_maxes))  
+        
+    for axis in ax.ravel() :
+        axis.axhline(0,ls='--')        
+        axis.set_xlabel(r'MJD')
+        axis.legend(fontsize=18)
+            
+#         for axis in ax[0] :
+#             axis.axhline(0,ls='--')        
+#             axis.set_ylabel(r'Subbed flux (mJy)')
+#             axis.legend()    
+    for axis in ax :
+        axis.axhline(0,ls='--',lw='0.5',color='k') 
+        axis.axvline(0,ls='--',lw='0.5',color='k')        
+        axis.set_ylabel(r'Host subtracted L (erg/s)')
+        if xlims != None:
+            axis.set_xlim(xlims[0],xlims[1])        
+
+        axis.legend(fontsize=12)  
+    # Make some titles    
+    ax[0].set_title('W1'); ax[1].set_title('W2')    
+    title_string = ' to '.join([galaxy.source for galaxy in gals])
+    print(title_string)
+    if title == 'yes':
+        fig.suptitle("Compare: "+title_string)
+
+    fig.set_size_inches(14,7)
+    if save == 'yes':
+        if savename == None :
+            plt.savefig("/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/WISE_gal_plots/comparisons/"+\
+                 "Compare_"+'_'.join([galaxy.source for galaxy in gals]) + ".pdf",bbox_inches='tight')
+        else :
+            plt.savefig(savename + ".pdf",bbox_inches='tight')
+        
+    return (fig,ax)
+    #plt.show()   
     
     
     
