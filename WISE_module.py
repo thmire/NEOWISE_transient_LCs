@@ -386,13 +386,12 @@ class WISE_Data:
         else :
             print("We have AllWISE, so trimming superseded psf measurements")
             psf_vals_to_drop = ["w1mpro","w1sigmpro","w2mpro","w2sigmpro","w3mpro","w3sigmpro","w4mpro","w4sigmpro"]
-            WISE_datatable.drop(columns=(psf_vals_to_drop),inplace=True)
-            self.test = WISE_datatable
-            try :
+            if "WISE" in available_files:
+            	WISE_datatable.drop(columns=(psf_vals_to_drop),inplace=True)
+            if "WISE3bandCryo" in available_files :
                 WISE3bandCryo_datatable.drop(columns=(psf_vals_to_drop[0:-2]),inplace=True)
-            except :
-                print("no WISE3band data")
-            WISEPostCryo_datatable.drop(columns=(psf_vals_to_drop[0:-4]),inplace=True)
+            if "WISEPostCryo" in available_files :
+            	WISEPostCryo_datatable.drop(columns=(psf_vals_to_drop[0:-4]),inplace=True)
 
         final_df = pd.concat((NEOWISE_datatable,AllWISE_datatable,
                               WISE_datatable,WISE3bandCryo_datatable,WISEPostCryo_datatable),
