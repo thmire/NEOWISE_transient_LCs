@@ -688,64 +688,97 @@ class WISE_Data:
             neowise_extras[i] = self.datatable[i][mask]
         self.companion_data = neowise_extras
         
-        #Apply non-linearity correction        
+        #Apply non-linearity correction
+        
         # Get location of this file
         filepath = os.path.dirname(os.path.abspath(__file__))
         WISE_nonlin_path = filepath + "/WISE_nonlinearity_correction/"
         
-        w1_lincorr = np.loadtxt(WISE_nonlin_path + 'W1_saturation_corr.txt',
-                               skiprows=5,unpack='yes')
-        w2_lincorr = np.loadtxt(WISE_nonlin_path + 'W2_saturation_corr.txt',
-                                skiprows=5,unpack='yes')
+        nonlin_df_w1=pd.read_csv(WISE_nonlin_path+'W1_saturation_corr.txt',sep=",",header=0,skiprows=5,
+                        dtype=float)
+        nonlin_df_w2=pd.read_csv(WISE_nonlin_path+'W2_saturation_corr.txt',sep=",",header=0,skiprows=5,
+                        dtype=float)
+
+        # pre-assign some cols we will fill
+        # NB1:  We overwrite the mags in the filtered datatable with the corrected mags
+        #       We record the correction and associated uncertainty, so the original mag can be recovered
+        # NB2: WE ARE NOT CURRENTLY APPLYING ANY NON-LINEARITY CORRECTION FOR APERTURE VALUES
+        # NB3: WE ARE NOT CURRENTLY UPDATING THE UNCERTAINTIES FOR THE MAGS OR FLUXES
+        #      This is because the final uncertainties are the SEM of the measured values, so
+        #      are unaffected by the individual uncertainties on each measurement.
+        #      They are uncluded as a systematic uncertainty during binning.
+
         
-        w1mags = neowise_df["w1mag"].to_numpy()
-        w2mags = neowise_df["w2mag"].to_numpy()
-        nonlin_unc_w1 = np.zeros(len(w1mags))
-        nonlin_unc_w2 = np.zeros(len(w2mags))
-    
+        neowise_df = neowise_df.assign(w1mag_nonlin_correction = np.nan,
+                                         w1mag_nonlin_unc = np.nan,
+                                         w2mag_nonlin_correction = np.nan,
+                                         w2mag_nonlin_unc = np.nan)
+        
         sat_warning=None
-        for i in range(0,len(w1mags)) :
-            mag = w1mags[i]
-            if mag < 8 :
-                if sat_warning == None :
-                    print("Applying saturation correction for W1")
-                    sat_warning = 'yes'
-                find_mag = [abs(mag-i) for i in w1_lincorr[0]]
-                index = np.where(find_mag == np.min(find_mag))
-                mag_corr = mag +  w1_lincorr[1][index]
-                corr_err = np.max(np.array([w1_lincorr[2][index],w1_lincorr[3][index]]))
-                nonlin_unc_w1[np.where(w1mags == mag)] = corr_err
-                w1mags[np.where(w1mags == mag)] = mag_corr[0]
+
+        for i, row in neowise_df.iterrows():
+            w1_mag = row['w1mag']; w2_mag = row['w2mag']
+            if w1_mag < 8 :
+                nonlin_corr_vals_w1 = nonlin_df_w1.where(nonlin_df_w1["w1mpro"] - float(w1_mag) == 0).dropna()
+                neowise_df["w1mag"][i] =  w1_mag + nonlin_corr_vals_w1["w1mcorr"]
+                neowise_df["w1mag_nonlin_correction"][i] = nonlin_corr_vals_w1["w1mcorr"]
+                neowise_df["w1mag_nonlin_unc"][i] = np.max(nonlin_corr_vals_w1[["w1lunc","w1uunc"]].loc[nonlin_corr_vals_w1.index[0]])
+            else :
+                neowise_df["w1mag_nonlin_correction"][i] = 0
+                neowise_df["w1mag_nonlin_unc"][i] = 0
                 
-        sat_warning=None
-        for i in range(0,len(w2mags)) :
-            mag = w2mags[i]
-            if mag < 7 :
-                if sat_warning == None :
-                    print("Applying saturation correction for W2")
-                    sat_warning = 'yes'
-                find_mag = [abs(mag-i) for i in w2_lincorr[0]]
-                index = np.where(find_mag == np.min(find_mag))
-                mag_corr = mag +  w2_lincorr[1][index]
-                corr_err = np.max(np.array([w2_lincorr[2][index],w2_lincorr[3][index]]))
-                nonlin_unc_w2[np.where(w2mags == mag)] = corr_err
-                w2mags[np.where(w2mags == mag)] = mag_corr[0]
-        
-        neowise_df["w1_nonlin_unc"] = nonlin_unc_w1; neowise_df["w2_nonlin_unc"] = nonlin_unc_w2
-        
-	# Note that we don't correct the flux errs here
-	# we correct the uncertainties on the binned values
+            if w2_mag < 7 :
+                nonlin_corr_vals_w2 = nonlin_df_w2.where(nonlin_df_w2["w2mpro"] - float(w2_mag) == 0).dropna()
+                neowise_df["w2mag"][i] =  w2_mag + nonlin_corr_vals_w2["w2mcorr"]
+                neowise_df["w2mag_nonlin_correction"][i] = nonlin_corr_vals_w2["w2mcorr"]
+                neowise_df["w2mag_nonlin_unc"][i] = np.max(nonlin_corr_vals_w2[["w2lunc","w2uunc"]].loc[nonlin_corr_vals_w2.index[0]])
+            else :
+                neowise_df["w2mag_nonlin_correction"][i] = 0
+                neowise_df["w2mag_nonlin_unc"][i] = 0    
+
+##        
+##        for i in range(0,len(w1mags)) :
+##            mag = w1mags[i]
+##            if mag < 8 :
+##                if sat_warning == None :
+##                    print("Applying saturation correction for W1")
+##                    sat_warning = 'yes'
+##                find_mag = [abs(mag-i) for i in w1_lincorr[0]]
+##                index = np.where(find_mag == np.min(find_mag))
+##                mag_corr = mag +  w1_lincorr[1][index]
+##                corr_err = np.max(np.array([w1_lincorr[2][index],w1_lincorr[3][index]]))
+##                nonlin_unc_w1[np.where(w1mags == mag)] = corr_err
+##                w1mags[np.where(w1mags == mag)] = mag_corr[0]
+##                
+##        sat_warning=None
+##        for i in range(0,len(w2mags)) :
+##            mag = w2mags[i]
+##            if mag < 7 :
+##                if sat_warning == None :
+##                    print("Applying saturation correction for W2")
+##                    sat_warning = 'yes'
+##                find_mag = [abs(mag-i) for i in w2_lincorr[0]]
+##                index = np.where(find_mag == np.min(find_mag))
+##                mag_corr = mag +  w2_lincorr[1][index]
+##                print(mag_corr,w2_lincorr[1][index],mag)
+##                corr_err = np.max(np.array([w2_lincorr[2][index],w2_lincorr[3][index]]))
+##                nonlin_unc_w2[np.where(w2mags == mag)] = corr_err
+##                w2mags[np.where(w2mags == mag)] = mag_corr[0]
+
+        neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
+        neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+
 	
         # Placeholder for W3 and W4, should look into this:
-        neowise_df["w3_nonlin_unc"] = 0; neowise_df["w4_nonlin_unc"] = 0
+        neowise_df["w3mag_nonlin_unc"] = 0; neowise_df["w4mag_nonlin_unc"] = 0
         
-        #neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
+        
         #neowise_df['w1fluxsig'] =   neowise_df['w1flux'] / self.datatable['w1snr'][neowise_mask]
         #neowise_df['w1fluxsig'] =   neowise_df['w1flux'] * mag_unc_to_flux_unc(neowise_df['w1sig'])
         
         # I did a test where I propogated the mag errs through instead of this
         # result was very similar, errors were a tiny bit less. So I will stick with this.
-        #neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+        
         #neowise_df['w2fluxsig'] =   neowise_df['w2flux'] / self.datatable['w2snr'][neowise_mask]
         #neowise_df['w2fluxsig'] =   neowise_df['w2flux'] * mag_unc_to_flux_unc(neowise_df['w2sig'])
 
@@ -761,8 +794,6 @@ class WISE_Data:
         """
         Bins data from sets of observations. Will plot as default
         
-        This function is a bit of a mess, now we do all 4 filters.
-        Should rewrite as a loop to cut down on characters
         
         """
         
@@ -864,7 +895,7 @@ class WISE_Data:
 
             # non-linearity correction
             binned_phot_dict[band + "mag_mean_nonlin_unc"] = scipy.stats.binned_statistic(self.data['mjd'].values,
-                                                                                         self.data[band+'_nonlin_unc'].values,\
+                                                                                         self.data[band+'mag_nonlin_unc'].values,\
                                                                                           statistic=np.mean, bins=bins, range=None)[0]
             binned_phot_dict[band + "flux_mean_nonlin_unc"] = (10**(0.4*binned_phot_dict[band + "mag_mean_nonlin_unc"]) - 1) * binned_phot_dict[band + "_fluxes"]
 
