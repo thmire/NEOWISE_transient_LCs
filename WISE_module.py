@@ -721,6 +721,7 @@ class WISE_Data:
             if w1_mag < 8 :
                 nonlin_corr_vals_w1 = nonlin_df_w1.where(nonlin_df_w1["w1mpro"] - float(w1_mag) == 0).dropna()
                 neowise_df["w1mag"][i] =  w1_mag + nonlin_corr_vals_w1["w1mcorr"]
+                neowise_df["w1flux"][i] = mag_to_fluxdens(neowise_df["w1mag"][i],self.f0_wise_3_4)
                 neowise_df["w1mag_nonlin_correction"][i] = nonlin_corr_vals_w1["w1mcorr"]
                 neowise_df["w1mag_nonlin_unc"][i] = np.max(nonlin_corr_vals_w1[["w1lunc","w1uunc"]].loc[nonlin_corr_vals_w1.index[0]])
             else :
@@ -730,6 +731,7 @@ class WISE_Data:
             if w2_mag < 7 :
                 nonlin_corr_vals_w2 = nonlin_df_w2.where(nonlin_df_w2["w2mpro"] - float(w2_mag) == 0).dropna()
                 neowise_df["w2mag"][i] =  w2_mag + nonlin_corr_vals_w2["w2mcorr"]
+                neowise_df["w2flux"][i] = mag_to_fluxdens(neowise_df["w2mag"][i],self.f0_wise_4_6)
                 neowise_df["w2mag_nonlin_correction"][i] = nonlin_corr_vals_w2["w2mcorr"]
                 neowise_df["w2mag_nonlin_unc"][i] = np.max(nonlin_corr_vals_w2[["w2lunc","w2uunc"]].loc[nonlin_corr_vals_w2.index[0]])
             else :
@@ -766,7 +768,7 @@ class WISE_Data:
 ##                w2mags[np.where(w2mags == mag)] = mag_corr[0]
 
         neowise_df['w1flux'] = mag_to_fluxdens(neowise_df['w1mag'], self.f0_wise_3_4)
-        neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
+        #neowise_df['w2flux'] = mag_to_fluxdens(neowise_df['w2mag'], self.f0_wise_4_6)
 
 	
         # Placeholder for W3 and W4, should look into this:
