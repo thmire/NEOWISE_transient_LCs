@@ -5,7 +5,7 @@
 
 ## Usage
 
-
+```
 sys.path.append('/PATH/TO/FOLDER/NEOWISE_transient_LCs/')
 import WISE_module as WISE 
 
@@ -53,5 +53,5 @@ WISE_data.plot_data(eplosion_epoch = [WISE.mjday("20210409")],
 WISE_data.normalised_plot(mjd_zero=56000,
       w1_zero=unp.nominal_values(WISE_data.binned_data['w1flux'][13]),
       w2_zero=unp.nominal_values(WISE_data.binned_data['w2flux'][13]))
-      
+```      
 
