@@ -136,12 +136,12 @@ def IRAS_query(path,catalog,pos,radius,name="NoName"):
     
     """
 
-    from astroquery.ipac.irsa import Irsa
+    from astroquery.irsa import Irsa
     import astropy.units as u
     import astropy.coordinates as coord
     import wget
     import requests
-
+    import urllib.request
     import os
     # Get location of this file
     filepath = os.path.dirname(os.path.abspath(__file__))
@@ -159,8 +159,8 @@ def IRAS_query(path,catalog,pos,radius,name="NoName"):
 ##                              catalog=catalog_dict[catalog],
 ##                              spatial="Cone",
 ##                              radius= radius * u.arcsec)
-    
-    #table.write(path + name + "_" + catalog + '.tbl', format='ascii')
+##    
+##    table.write(path + name + "_" + catalog + '.tbl', format='ascii')
 
     if catalog == "all" :
         catalogs = [catalog_dict[key] for key in catalog_dict.keys()]
@@ -231,10 +231,12 @@ def IRAS_query(path,catalog,pos,radius,name="NoName"):
         url =  url_stem +  "&".join([catalog_key,spatial_key,object_key,radius_key,
                                  radunits_key,outfmt_key,outrows_key,col_key]
                                 )
-    
+        print(url)
+        
         r = requests.get(url)
         with open(path + name + "_" + cat + '.tbl',"w") as fd:
             fd.write(r.text)
+
     
     #return url
 
@@ -304,7 +306,7 @@ class WISE_Data:
                 all_files.append(file_2)
         else :
             all_files = glob.glob(all_files_path+"/*.tbl")
-            
+        self.all_files_path = all_files_path    
         filetype = None; available_files = []
         for file_i in all_files :
             header = []
@@ -340,9 +342,9 @@ class WISE_Data:
                 if pos == None :
                     pos_median = SkyCoord(ra_median*u.deg,dec_median*u.deg, frame='icrs')
                 else :
-                    pos_median =SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs')
+                    pos_median =SkyCoord(pos[0]*u.deg,pos[1]*u.deg, frame='icrs',unit="degree")
                 read_df['sep'] = pos_median.separation(
-                    SkyCoord(read_df['ra']*u.deg,read_df['dec']*u.deg,frame='icrs')).arcsec
+                    SkyCoord(read_df['ra']*u.deg,read_df['dec']*u.deg,frame='icrs',unit="degree")).arcsec
                 if filetype == "NEOWISE" :
                     NEOWISE_datatable = read_df
                     self.NEOWISE_datatable = NEOWISE_datatable
@@ -551,9 +553,9 @@ class WISE_Data:
 #             ax = fig.add_subplot(1, 1, 1)                
 
         if save == 'yes' :
-            fig.savefig("/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/WISE_position_plots/" +\
-                        self.source + "_" + self.WISE_name + ".pdf",
-                       bbox_inches='tight')
+            fig.savefig(self.all_files_path +\
+                        self.source + "_" + self.WISE_name + ".png",
+                      facecolor="white",dpi=200,bbox_inches='tight')
         
         plt.show()
         
@@ -640,8 +642,8 @@ class WISE_Data:
                 [abs(i) > 5 for i in self.datatable['saa_sep']],\
                 self.datatable['moon_masked'] == 0,\
                 [(i == 0.0 or i == '0000') for i in self.datatable['cc_flags']],\
-#                ~np.isnan(self.datatable['w1mag']),\
-#                ~np.isnan(self.datatable['w2mag']),\
+                #~np.isnan(self.datatable['w1mag']),\
+                #~np.isnan(self.datatable['w2mag']),\
 ##                ~np.isnan(self.datatable['w1mpro']),\
 ##                ~np.isnan(self.datatable['w2mpro'])
 #                 self.datatable['w1flg'] == 0.0, 
@@ -658,7 +660,8 @@ class WISE_Data:
                 neowise_df[band + "mag"] = self.datatable[band + 'mpro'][neowise_mask]
                 neowise_df[band + "sig"] = self.datatable[band + 'sigmpro'][neowise_mask]
                 neowise_df[band + 'flux'] = mag_to_fluxdens(neowise_df[band + 'mag'], ZP_dict[band])
-                neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] / self.datatable[band + "snr"]
+               # neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] / self.datatable[band + "snr"]
+                neowise_df[band + 'fluxsig'] =   neowise_df[band + 'flux'] / pd.to_numeric(self.datatable[band + "snr"],errors="coerce")
                 neowise_df[band + 'apmag'] = self.datatable[band + 'mag'][neowise_mask]
                 neowise_df[band + 'apsig'] = self.datatable[band + 'sigm'][neowise_mask]
                 neowise_df[band + 'apflux'] = mag_to_fluxdens(neowise_df[band + 'apmag'],  ZP_dict[band])
@@ -1030,11 +1033,14 @@ class WISE_Data:
         
     
     def plot_data(self,saveonly='no',save="yes",
-                  path='/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/WISE_gal_plots/',
+                  path=None,
                  window = 'no',eplosion_epoch = [mjday('20190111')],flux='no',absmag='no',label='no'):
         """
         Makes plots of the W1 and W2 LCs. Will save to the path folder. saveonly = 'yes' not functional
         """
+
+        if not path :
+            path = self.all_files_path
         
         label_1 = r"W1 weighted mean"
         label_2 = r"W2 weighted mean"
@@ -1097,10 +1103,10 @@ class WISE_Data:
                          yerr = unp.std_devs(self.binned_data['w2mag']),
                         label=label_2, color='red', linestyle = '',
                          marker = 'o', markersize=5, capsize = 3, elinewidth = 1, zorder=1)
-            ax1.set_ylim(ymin = max(unp.nominal_values(self.binned_data['w1mag'])) + 0.2,
-                         ymax = min(unp.nominal_values(self.binned_data['w1mag'])) - 0.2)
-            ax2.set_ylim(ymin = max(unp.nominal_values(self.binned_data['w2mag'])) + 0.2,
-                         ymax = min(unp.nominal_values(self.binned_data['w2mag'])) - 0.2)
+            ax1.set_ylim(ymin = np.nanmax(unp.nominal_values(self.binned_data['w1mag'])) + 0.2,
+                         ymax = np.nanmin(unp.nominal_values(self.binned_data['w1mag'])) - 0.2)
+            ax2.set_ylim(ymin = np.nanmax(unp.nominal_values(self.binned_data['w2mag'])) + 0.2,
+                         ymax = np.nanmin(unp.nominal_values(self.binned_data['w2mag'])) - 0.2)
             ax1.set_ylabel(r'mag')
         
         # saturation limits
@@ -1136,7 +1142,7 @@ class WISE_Data:
         
         fig.set_size_inches(14,7)
         if save == "yes":
-            save_loc = path + self.source + "_" + self.WISE_name + "_" + '_NeoWISE_lightcurve_2020.png'
+            save_loc = path + self.source + "_" + self.WISE_name + "_NeoWISE_lightcurve.png"
             print("saving: ", save_loc)
             plt.savefig(save_loc,
                     bbox_inches='tight', dpi=300,transparent=False,facecolor="white")
@@ -1145,10 +1151,13 @@ class WISE_Data:
         if saveonly != 'yes':
             plt.show()
                 
-    def write(self,path='/home/treynolds/data/LIRGS/WISE/WISE_analysis/Data/WISE_gal_processed_data/'):
+    def write(self,path=None):
         """
          Writes data tables to text files at the requested path.
         """
+        if not path :
+            path = self.all_files_path
+            
         if self.baddata == 'yes':
             print(self.source+': No good data!')
             return
@@ -1325,11 +1334,12 @@ class WISE_Data:
             
         fig.set_size_inches(14,7)
         if save == 'yes':
-            plt.savefig("/home/treynolds/data/LIRGS/WISE/WISE_analysis/energy_plots/"+ self.source +"_2020.pdf",\
-                        bbox_inches='tight')
+            plt.savefig(self.all_files_path + self.source +".png",
+                        facecolor="white",dpi=200,bbox_inches='tight')
+            
         elif save == 'transient':
-            print("/home/treynolds/data/LIRGS/WISE/WISE_analysis/energy_plots/transients/"+ self.source +"_2020.pdf")
-            plt.savefig("/home/treynolds/temp/temp.pdf",bbox_inches='tight')            
+            plt.savefig(self.all_files_path + self.source +".png",
+                        facecolor="white",dpi=200,bbox_inches='tight')
 
         w1max = np.nanmax(w1Lum_binned_sub)
         w2max = np.nanmax(w2Lum_binned_sub)
@@ -1366,7 +1376,7 @@ class WISE_Data:
         Simple BB fit to the 2 wise points
         Use as starting point for the MCMC walkers?
         """
-        self.BB_filepath = "/home/treynolds/data/LIRGS/WISE/WISE_analysis/BB/"+ self.source + '/'
+        self.BB_filepath = self.all_files_path + self.source + '/'
         try :
             os.mkdir(self.BB_filepath)
         except FileExistsError :
@@ -1412,9 +1422,11 @@ class WISE_Data:
                 elif  len(results) <13 :
                     ax1 = fig.add_subplot(4,3,i)  # create an axes object in the figure 
                 elif  len(results) <17 :
-                    ax1 = fig.add_subplot(4,4,i)  # create an axes object in the figure 
-                else :
+                    ax1 = fig.add_subplot(4,4,i)  # create an axes object in the figure
+                elif  len(results) <21 :
                     ax1 = fig.add_subplot(4,5,i)  # create an axes object in the figure 
+                else :
+                    ax1 = fig.add_subplot(5,5,i)  # create an axes object in the figure 
 
                 fl = good_data[i-1][1:3]; fl_err = good_data[i-1][3:5]
                 ax1.errorbar(wl,fl,yerr=fl_err, linestyle=':',marker = 'o',color = 'xkcd:red', label='Data')
@@ -1425,7 +1437,8 @@ class WISE_Data:
                 ax1.axes.set_xlim(wl[0]-1E-7,wl[-1]+1E-7)
                 plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, \
                    ncol=2, mode="expand", borderaxespad=0.)
-            plt.savefig(self.BB_filepath + 'simple_BBs_'+  self.source + "_2020.pdf",bbox_inches='tight')
+            plt.savefig(self.BB_filepath + 'simple_BBs_'+  self.source + ".png",
+                        facecolor="white",dpi=200,bbox_inches='tight')
             plt.show()
  
         
@@ -1434,7 +1447,7 @@ class WISE_Data:
         """
         Fit a BB to the subtracted W1 and W2 flux
         """
-        self.BB_filepath = "/home/treynolds/data/LIRGS/WISE/WISE_analysis/BB/"+ self.source + '/'
+        self.BB_filepath = self.all_files_path + self.source + '/'
         try :
             os.mkdir(self.BB_filepath)
         except FileExistsError :
@@ -1488,7 +1501,8 @@ class WISE_Data:
                 for j in range(int(np.floor(nwalkers/5))): # walkers
                     axs[i].plot( np.arange(nsample), data[j,:,i],lw=0.5)
                  # x-axis is just the current iteration number
-                fig.savefig(self.BB_filepath + str(np.round(epoch,2)) +  "_trace.pdf",bbox_inches='tight')
+                fig.savefig(self.BB_filepath + str(np.round(epoch,2)) +  "_trace.png",
+                            facecolor="white",dpi=200,bbox_inches='tight')
             
             
             # Make a corner plot
@@ -1497,9 +1511,9 @@ class WISE_Data:
                                  quantiles=[0.16, 0.5, 0.84])
                                  # Discard first 300 samples (burn in)
         
-            figure.savefig(self.BB_filepath +"corner_" + str(np.round(epoch,2))  + ".pdf",
-                           bbox_inches='tight')
-        
+            figure.savefig(self.BB_filepath +"corner_" + str(np.round(epoch,2))  + ".png",
+                facecolor="white",dpi=200,bbox_inches='tight')
+            
             samples = sampler.chain[:, burnin:, :].reshape(-1, 2) 
             self.samples = samples
             scale_best = np.median(sampler.chain[:, burnin:, 0])
@@ -1611,9 +1625,13 @@ class WISE_Data:
             elif len(self.BB_plot_numbers) <10 :
                 ax1 = fig.add_subplot(3,3,i)  # create an axes object in the figure 
             elif  len(self.BB_plot_numbers) <13 :
-                ax1 = fig.add_subplot(4,3,i)  # create an axes object in the figure 
+                ax1 = fig.add_subplot(4,3,i)  # create an axes object in the figure
+            elif  len(self.BB_plot_numbers) <17 :
+                ax1 = fig.add_subplot(4,4,i)  # create an axes object in the figure
+            elif  len(self.BB_plot_numbers) <21 :
+                ax1 = fig.add_subplot(5,4,i)  # create an axes object in the figure
             else :
-                ax1 = fig.add_subplot(4,4,i)  # create an axes object in the figure 
+                ax1 = fig.add_subplot(5,5,i)  # create an axes object in the figure 
 
             fr = []
             for item in wl :
@@ -1635,7 +1653,8 @@ class WISE_Data:
             ax1.axes.set_xlim(x[0],x[-1])  
             ax1.set_title("Phase: " + str(np.round(self.BB_plot_numbers[i-1][5],2)))
             
-        plt.savefig(self.BB_filepath + 'MCMC_BBs_'+  self.source + ".pdf",bbox_inches='tight')
+        plt.savefig(self.BB_filepath + 'MCMC_BBs_'+  self.source + ".png",
+                            facecolor="white",dpi=200,bbox_inches='tight')
         plt.show()       
     
     def BB_results_plot(self,evap=None,plot=None,simple='yes'):
@@ -1703,8 +1722,8 @@ class WISE_Data:
         fig.suptitle('BB_fitting for ' + self.source, fontsize=16)
         
 
-        plt.savefig(self.BB_filepath +  self.source + ".pdf",
-                   bbox_inches='tight')
+        plt.savefig(self.BB_filepath +  self.source + ".png",
+                   facecolor="white",dpi=200,bbox_inches='tight')
         
         plt.show()
 
@@ -2075,7 +2094,7 @@ def mag_minmax(data):
     ((w1_mag_max,w1_mag_min),(w2_mag_max,w2_mag_min))
        
        
-def comparison_plot(gals,window=None,save='yes', log='no',clean='no',savename=None,xlims=None,title='no'):
+def comparison_plot(gals,window=None,save='yes', log='no',clean='yes',savename=None,xlims=None,title='no'):
     """
     Input is list of WISE_data class objects
     """
@@ -2088,7 +2107,7 @@ def comparison_plot(gals,window=None,save='yes', log='no',clean='no',savename=No
     w1_maxes=[];w2_maxes=[];w1_mins=[];w2_mins=[]
     for galaxy in gals :
         
-        mjd_sub = galaxy.data['mjd_sub']; mjd_binned_sub = galaxy.binned_data['mjd_binned_sub']
+        mjd_sub = galaxy.data['mjd']; mjd_binned_sub = galaxy.binned_data['mjd']
         w1Lum_sub = galaxy.data['w1Lum_sub']; w1Lum_binned_sub = galaxy.binned_data['w1Lum_binned_sub']
         w1Lum_sub_err = galaxy.data['w1Lum_sub_err']; w1Lum_binned_sub_err = galaxy.binned_data['w1Lum_binned_sub_err']
         w2Lum_sub = galaxy.data['w2Lum_sub']; w2Lum_binned_sub = galaxy.binned_data['w2Lum_binned_sub']
